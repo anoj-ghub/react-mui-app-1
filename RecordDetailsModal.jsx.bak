@@ -1,0 +1,1065 @@
+import { useState } from 'react'
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  TableHead,
+  Checkbox,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Pagination,
+  Button,
+  Box,
+  Typography,
+  Chip,
+  Switch,
+  FormControlLabel,
+  FormGroup,
+  Divider,
+  Toolbar,
+  Paper
+} from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import ViewListIcon from '@mui/icons-material/ViewList'
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore'
+import NavigateNextIcon from '@mui/icons-material/NavigateNext'
+import DownloadIcon from '@mui/icons-material/Download'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import RestoreIcon from '@mui/icons-material/Restore'
+import SchemaIcon from '@mui/icons-material/Schema'
+import DataObjectIcon from '@mui/icons-material/DataObject'
+import FilterAltIcon from '@mui/icons-material/FilterAlt'
+
+function RecordDetailsModal({
+  detailsOpen,
+  selectedRow,
+  selectedTable,
+  currentRecordIndex,
+  setCurrentRecordIndex,
+  tableData,
+  environment,
+  onClose,
+  darkMode
+}) {  // Row visibility states for modal
+  const [hiddenModalRows, setHiddenModalRows] = useState(new Set())
+  const [contextMenu, setContextMenu] = useState(null)
+  const [selectedModalRows, setSelectedModalRows] = useState([])  // Toggle button states
+  const [schemaActive, setSchemaActive] = useState(true) // true = active only, false = active + inactive side-by-side
+  const [fullDataMode, setFullDataMode] = useState(true) // true = full, false = delta (only enabled when inactive schema shown)
+  const [nodApplied, setNodApplied] = useState(false) // true = applied, false = not applied
+  const handlePreviousRecord = () => {
+    if (currentRecordIndex > 0) {
+      const newIndex = currentRecordIndex - 1
+      setCurrentRecordIndex(newIndex)
+      setSelectedModalRows([]) // Reset modal row selection
+      setHiddenModalRows(new Set()) // Reset hidden rows
+    }
+  }
+
+  const handleNextRecord = () => {
+    if (currentRecordIndex < tableData.length - 1) {
+      const newIndex = currentRecordIndex + 1
+      setCurrentRecordIndex(newIndex)
+      setSelectedModalRows([]) // Reset modal row selection
+      setHiddenModalRows(new Set()) // Reset hidden rows
+    }
+  }
+
+  const handleRecordPageChange = (event, page) => {
+    const newIndex = page - 1
+    if (newIndex >= 0 && newIndex < tableData.length) {
+      setCurrentRecordIndex(newIndex)
+      setSelectedModalRows([]) // Reset modal row selection
+      setHiddenModalRows(new Set()) // Reset hidden rows
+    }
+  }
+
+  const handleRowContextMenu = (event) => {
+    event.preventDefault()
+    if (selectedModalRows.length > 0) {
+      setContextMenu({
+        mouseX: event.clientX - 2,
+        mouseY: event.clientY - 4,
+      })
+    }
+  }
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null)
+  }
+
+  const handleToggleRowSelection = (index) => {
+    setSelectedModalRows(prev => {
+      const newSelection = prev.includes(index)
+        ? prev.filter(i => i !== index)
+        : [...prev, index]
+      return newSelection
+    })
+  }
+
+  const handleToggleRowVisibility = (index) => {
+    setHiddenModalRows(prev => {
+      const newHidden = new Set(prev)
+      if (newHidden.has(index)) {
+        newHidden.delete(index)
+      } else {
+        newHidden.add(index)
+      }
+      return newHidden
+    })
+  }
+
+  const handleHideSelectedRows = () => {
+    setHiddenModalRows(prev => {
+      const newHidden = new Set(prev)
+      selectedModalRows.forEach(index => {
+        newHidden.add(index)
+      })
+      return newHidden
+    })
+    setSelectedModalRows([])
+    handleCloseContextMenu()
+  }
+
+  const handleShowSelectedRows = () => {
+    setHiddenModalRows(prev => {
+      const newHidden = new Set(prev)
+      selectedModalRows.forEach(index => {
+        newHidden.delete(index)
+      })
+      return newHidden
+    })
+    setSelectedModalRows([])
+    handleCloseContextMenu()
+  }
+
+  const handleShowAllRows = () => {
+    setHiddenModalRows(new Set())
+    setSelectedModalRows([])
+    handleCloseContextMenu()
+  }
+
+  // JSON Export Functions
+  const downloadJSON = (data, filename) => {
+    const jsonString = JSON.stringify(data, null, 2)
+    const blob = new Blob([jsonString], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+  const handleExportCurrentRecord = () => {
+    if (selectedRow) {
+      const exportData = {
+        table: selectedTable,
+        environment: environment,
+        exportDate: new Date().toISOString(),
+        recordIndex: currentRecordIndex + 1,
+        data: selectedRow
+      }
+      downloadJSON(exportData, `${selectedTable.replace(' ', '_')}_record_${selectedRow.id}.json`)
+    }
+  }
+  const handleShowFieldDetails = (fieldKey) => {
+    setFieldDetailsOpen(fieldKey)
+  }
+
+  const handleCloseFieldDetails = () => {
+    setFieldDetailsOpen(null)
+  }
+  // Get field details data
+  const getFieldDetails = (fieldKey) => {
+    if (!selectedRow || !fieldKey) return null
+    
+    const fieldMappings = {
+      id: {
+        displayName: 'ID',
+        dataType: 'INTEGER',
+        source: 'Primary Key',
+        description: 'Unique identifier for the record',
+        nullable: false,
+        maxLength: null,
+        defaultValue: 'AUTO_INCREMENT',
+        constraints: ['PRIMARY KEY', 'NOT NULL'],
+        indexed: true
+      },
+      name: {
+        displayName: 'Name',
+        dataType: 'VARCHAR',
+        source: 'User Input',
+        description: 'Full name of the entity',
+        nullable: false,
+        maxLength: 255,
+        defaultValue: null,
+        constraints: ['NOT NULL'],
+        indexed: false
+      },
+      account: {
+        displayName: 'Account',
+        dataType: 'VARCHAR',
+        source: 'Generated',
+        description: 'Account number with format ACC###',
+        nullable: false,
+        maxLength: 10,
+        defaultValue: null,
+        constraints: ['UNIQUE', 'NOT NULL'],
+        indexed: true
+      },
+      status: {
+        displayName: 'Status',
+        dataType: 'ENUM',
+        source: 'Workflow',
+        description: 'Current status of the record',
+        nullable: false,
+        maxLength: null,
+        defaultValue: 'ACTIVE',
+        constraints: ['CHECK (status IN (\'ACTIVE\', \'INACTIVE\', \'PENDING\'))'],
+        indexed: true
+      },
+      created: {
+        displayName: 'Created Date',
+        dataType: 'TIMESTAMP',
+        source: 'System Generated',
+        description: 'Record creation timestamp',
+        nullable: false,
+        maxLength: null,
+        defaultValue: 'CURRENT_TIMESTAMP',
+        constraints: ['NOT NULL'],
+        indexed: true
+      }
+    }
+    
+    return fieldMappings[fieldKey] || {
+      displayName: fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1),
+      dataType: 'VARCHAR',
+      source: 'Unknown',
+      description: 'No detailed information available',
+      nullable: true,
+      maxLength: 255,
+      defaultValue: null,
+      constraints: [],
+      indexed: false
+    }
+  }
+      },
+      amount: {
+        displayName: 'Amount',
+        dataType: 'DECIMAL',
+        source: 'Transaction System',
+        description: 'Monetary amount in USD',
+        nullable: true,
+        maxLength: null,
+        defaultValue: 0.00
+      },
+      date: {
+        displayName: 'Date',
+        dataType: 'DATE',
+        source: 'System Generated',
+        description: 'Record creation or transaction date',
+        nullable: false,
+        maxLength: null,
+        defaultValue: 'CURRENT_DATE'
+      },
+      status: {
+        displayName: 'Status',
+        dataType: 'ENUM',
+        source: 'Business Logic',
+        description: 'Current status of the record',
+        nullable: false,
+        maxLength: null,
+        defaultValue: 'Pending'
+      },
+      category: {
+        displayName: 'Category',
+        dataType: 'VARCHAR',
+        source: 'Classification System',
+        description: 'Business category classification',
+        nullable: true,
+        maxLength: 100,
+        defaultValue: null
+      },
+      department: {
+        displayName: 'Department',
+        dataType: 'VARCHAR',
+        source: 'HR System',
+        description: 'Organizational department',
+        nullable: true,
+        maxLength: 100,
+        defaultValue: null
+      }
+    }
+
+    return Object.keys(selectedRow)
+      .filter(key => key !== 'id' || true) // Include all fields including id
+      .map(key => ({
+        field: key,
+        value: selectedRow[key],
+        ...mappingInfo[key] || {
+          displayName: key,
+          dataType: 'VARCHAR',
+          source: 'Unknown',
+          description: 'No mapping information available',
+          nullable: true,
+          maxLength: null,
+          defaultValue: null
+        }
+      }))
+  }
+
+  const formatValue = (key, value, tableName) => {
+    if (typeof value === 'number') {
+      if (key === 'amount' || key === 'price' || key === 'total' || key === 'salary') {
+        return `$${value.toLocaleString()}`
+      }
+      return value.toString()
+    }
+    return value?.toString() || ''
+  }
+  const getFieldDisplayName = (field) => {
+    const displayNames = {
+      id: 'ID',
+      name: 'Name',
+      account: 'Account',
+      amount: 'Amount',
+      date: 'Date',
+      product: 'Product',
+      category: 'Category',
+      price: 'Price',
+      stock: 'Stock',
+      order: 'Order',
+      customer: 'Customer',
+      status: 'Status',
+      total: 'Total',
+      employee: 'Employee',
+      department: 'Department',
+      salary: 'Salary',
+      hire_date: 'Hire Date'
+    }
+    return displayNames[field] || field
+  }
+
+  // Helper function to render cell values consistently
+  const renderCellValue = (key, value) => {
+    if (key === 'status') {
+      return (
+        <Chip 
+          label={value} 
+          size="small" 
+          color={
+            value === 'Shipped' ? 'info' :
+            value === 'Delivered' ? 'success' :
+            value === 'Pending' ? 'warning' :
+            value === 'Processing' ? 'secondary' :
+            value === 'Cancelled' ? 'error' :
+            value === 'Returned' ? 'default' :
+            value === 'Draft' ? 'default' :
+            value === 'Archived' ? 'default' : 'default'
+          }
+          sx={{ 
+            fontSize: '0.7rem', 
+            height: 20,
+            '& .MuiChip-label': {
+              padding: '0 6px'
+            }
+          }}
+        />
+      )
+    } else if (key === 'category' || key === 'department') {
+      return (
+        <Chip 
+          label={value} 
+          size="small" 
+          color="primary" 
+          variant="outlined"
+          sx={{ 
+            fontSize: '0.7rem', 
+            height: 20,
+            '& .MuiChip-label': {
+              padding: '0 6px'
+            }
+          }}
+        />
+      )
+    } else {
+      return (
+        <Typography 
+          component="span"
+          sx={{ 
+            color: (key === 'amount' || key === 'price' || key === 'total' || key === 'salary') ? 'success.main' : 'inherit',
+            fontWeight: (key === 'amount' || key === 'salary') ? '600' : '400',
+            fontSize: '0.8rem'
+          }}
+        >
+          {formatValue(key, value, selectedTable)}
+        </Typography>
+      )
+    }
+  }
+  // Get all row data for selection purposes
+  const getAllRowData = () => {
+    if (!selectedRow) return []
+    return Object.entries(selectedRow)
+      .filter(([key]) => key !== 'id')
+      .map(([key, value], index) => ({ key, value, index }))
+  }
+
+  // Mock function to generate inactive schema data (simulated)
+  const getInactiveSchemaData = () => {
+    if (!selectedRow) return {}
+    // Simulate inactive schema data with slight variations
+    const inactiveData = { ...selectedRow }
+    
+    // Add some variations to simulate inactive schema differences
+    Object.keys(inactiveData).forEach(key => {
+      if (key !== 'id') {
+        if (typeof inactiveData[key] === 'number') {
+          // Add slight variation to numbers for inactive schema
+          inactiveData[key] = Math.round(inactiveData[key] * (0.95 + Math.random() * 0.1))
+        } else if (key === 'status') {
+          // Different status values for inactive schema
+          const statuses = ['Pending', 'Processing', 'Draft', 'Archived']
+          inactiveData[key] = statuses[Math.floor(Math.random() * statuses.length)]
+        }
+      }
+    })
+    
+    return inactiveData
+  }
+  // Get combined data for side-by-side display
+  const getCombinedRowData = () => {
+    if (!selectedRow) return []
+    const activeData = selectedRow
+    const inactiveData = getInactiveSchemaData()
+    
+    const allRows = Object.keys(activeData)
+      .filter(key => key !== 'id')
+      .map((key, index) => ({
+        key,
+        activeValue: activeData[key],
+        inactiveValue: inactiveData[key],
+        index,
+        isDifferent: activeData[key] !== inactiveData[key]
+      }))
+
+    // Filter based on fullDataMode when inactive schema is shown
+    if (!schemaActive) {
+      if (fullDataMode) {
+        // Full mode: show all rows
+        return allRows
+      } else {
+        // Delta mode: show only rows where data has changed
+        return allRows.filter(row => row.isDifferent)
+      }
+    }
+    
+    return allRows
+  }
+
+  const handleClose = () => {
+    setSelectedModalRows([])
+    setHiddenModalRows(new Set())
+    onClose()
+  }
+
+  return (
+    <>      {/* Details Modal */}
+      <Dialog 
+        open={detailsOpen} 
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        disableAutoFocus={false}
+        disableEnforceFocus={false}
+        disableRestoreFocus={false}
+        PaperProps={{
+          sx: {
+            backgroundColor: 'background.paper',
+          }
+        }}
+      ><DialogTitle sx={{ 
+          background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          minHeight: 64
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 'fit-content' }}>
+            <ViewListIcon sx={{ mr: 1 }} />
+            {selectedTable} - Record {currentRecordIndex + 1} of {tableData.length}
+          </Box>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            gap: 1
+          }}>            {/* Export Current Record Button */}
+            <Button 
+              onClick={handleExportCurrentRecord}
+              startIcon={<DownloadIcon sx={{ fontSize: '0.8rem' }} />}
+              size="small"
+              variant="contained"
+              aria-label="Export current record as JSON"
+              sx={{ 
+                mr: 1,
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.3)',
+                },
+                fontSize: '0.7rem',
+                height: 28
+              }}
+            >
+              Export JSON
+            </Button>
+            
+            {/* Field Mapping Button */}
+            <Button 
+              onClick={handleShowFieldMapping}
+              startIcon={<MapIcon sx={{ fontSize: '0.8rem' }} />}
+              size="small"
+              variant="contained"
+              aria-label="Show field mapping information"
+              sx={{ 
+                mr: 2,
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.3)',
+                },
+                fontSize: '0.7rem',
+                height: 28
+              }}
+            >
+              Field Mapping
+            </Button>
+              {/* Navigation Controls */}
+            <IconButton 
+              onClick={handlePreviousRecord}
+              disabled={currentRecordIndex === 0}
+              sx={{ color: 'white', mr: 1 }}
+              size="small"
+              aria-label="Previous record"
+            >
+              <NavigateBeforeIcon />
+            </IconButton>
+            <Typography variant="body2" sx={{ color: 'white', mx: 1, minWidth: 60, textAlign: 'center' }}>
+              {currentRecordIndex + 1} / {tableData.length}
+            </Typography>
+            <IconButton 
+              onClick={handleNextRecord}
+              disabled={currentRecordIndex === tableData.length - 1}
+              sx={{ color: 'white', mr: 2 }}
+              size="small"
+              aria-label="Next record"
+            >
+              <NavigateNextIcon />
+            </IconButton>
+              <IconButton 
+              onClick={handleClose}
+              sx={{ color: 'white' }}
+              size="small"
+              aria-label="Close dialog"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>        </DialogTitle>
+        
+        {/* Separate Toolbar for Switch Controls */}
+        <Toolbar 
+          variant="dense" 
+          sx={{ 
+            backgroundColor: darkMode ? 'rgba(255,255,255,0.03)' : '#f8f9fa',
+            borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#e9ecef'}`,
+            minHeight: 48,
+            px: 2,
+            justifyContent: 'space-between'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <FormGroup row>              <FormControlLabel
+                control={
+                  <Switch
+                    checked={!schemaActive}
+                    onChange={(e) => setSchemaActive(!e.target.checked)}
+                    size="small"
+                    color="success"
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <SchemaIcon sx={{ fontSize: '1rem' }} />
+                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                      {schemaActive ? 'Active Schema Only' : 'Show Inactive Schema'}
+                    </Typography>
+                  </Box>
+                }
+                sx={{ mr: 2 }}
+              />
+              
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={fullDataMode}
+                    onChange={(e) => setFullDataMode(e.target.checked)}
+                    size="small"
+                    color="primary"
+                    disabled={schemaActive} // Only enabled when inactive schema is shown
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <DataObjectIcon sx={{ fontSize: '1rem' }} />
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontSize: '0.8rem',
+                        color: schemaActive ? 'text.disabled' : 'inherit'
+                      }}
+                    >
+                      {fullDataMode ? 'Full Data' : 'Delta Data'}
+                    </Typography>
+                  </Box>
+                }
+                sx={{ mr: 2 }}
+              />
+              
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={nodApplied}
+                    onChange={(e) => setNodApplied(e.target.checked)}
+                    size="small"
+                    color="warning"
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <FilterAltIcon sx={{ fontSize: '1rem' }} />
+                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                      Apply NOD
+                    </Typography>
+                  </Box>
+                }
+              />
+            </FormGroup>
+          </Box>          {/* Status indicators on the right */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip 
+              label={schemaActive ? 'Active Only' : 'Active + Inactive'} 
+              size="small" 
+              color={schemaActive ? 'primary' : 'success'}
+              sx={{ height: 20, fontSize: '0.7rem' }}
+            />
+            {!schemaActive && (
+              <>
+                <Chip 
+                  label={fullDataMode ? 'Full' : 'Delta'} 
+                  size="small" 
+                  color={fullDataMode ? 'primary' : 'secondary'}
+                  sx={{ height: 20, fontSize: '0.7rem' }}
+                />
+                {!fullDataMode && (
+                  <Chip 
+                    label={`${getCombinedRowData().length} changed`} 
+                    size="small" 
+                    color="info"
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '0.6rem' }}
+                  />
+                )}
+              </>
+            )}
+            <Chip 
+              label={nodApplied ? 'NOD Applied' : 'NOD Off'} 
+              size="small" 
+              color={nodApplied ? 'success' : 'warning'}
+              sx={{ height: 20, fontSize: '0.7rem' }}
+            />
+          </Box>
+        </Toolbar>
+        
+        <DialogContent sx={{ p: 0 }} onContextMenu={handleRowContextMenu}>          {/* Excel-style Data Display with Row Selection */}
+          {selectedRow && (
+            <TableContainer sx={{ 
+              maxHeight: 400,
+              '& .MuiTable-root': {
+                borderCollapse: 'separate',
+                borderSpacing: 0
+              }
+            }}>
+              <Table 
+                size="small" 
+                sx={{
+                  '& .MuiTableCell-root': {
+                    fontSize: '0.8rem',
+                    padding: '4px 8px',
+                    height: '28px',
+                    border: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#d0d7de'}`,
+                    borderLeft: 'none',
+                    borderTop: 'none',
+                    '&:first-of-type': {
+                      borderLeft: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#d0d7de'}`
+                    }
+                  },
+                  '& .MuiTableRow-root': {
+                    '&:first-of-type .MuiTableCell-root': {
+                      borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#d0d7de'}`
+                    },
+                    '&:hover': {
+                      backgroundColor: darkMode ? 'rgba(255,255,255,0.05) !important' : '#f6f8fa !important'
+                    }
+                  }
+                }}
+              >                <TableBody>
+                  {/* Row number header */}
+                  <TableRow sx={{ backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : '#f6f8fa' }}>
+                    <TableCell 
+                      sx={{ 
+                        width: 40, 
+                        textAlign: 'center',
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f1f3f4 !important',
+                        fontWeight: 'bold',
+                        color: 'text.secondary',
+                        fontSize: '0.75rem !important'
+                      }}
+                    >
+                      #
+                    </TableCell>
+                    <TableCell 
+                      sx={{ 
+                        fontWeight: 'bold',
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f1f3f4 !important',
+                        color: 'text.secondary',
+                        fontSize: '0.75rem !important',
+                        width: schemaActive ? '25%' : '20%'
+                      }}
+                    >
+                      Field
+                    </TableCell>
+                    <TableCell 
+                      sx={{ 
+                        fontWeight: 'bold',
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f1f3f4 !important',
+                        color: 'text.secondary',
+                        fontSize: '0.75rem !important',
+                        width: schemaActive ? 'auto' : '40%'
+                      }}
+                    >
+                      {schemaActive ? 'Value' : 'Active Schema'}
+                    </TableCell>
+                    {!schemaActive && (
+                      <TableCell 
+                        sx={{ 
+                          fontWeight: 'bold',
+                          backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f1f3f4 !important',
+                          color: 'text.secondary',
+                          fontSize: '0.75rem !important',
+                          width: '40%'
+                        }}
+                      >
+                        Inactive Schema
+                      </TableCell>
+                    )}
+                  </TableRow>
+
+                  {/* Data rows - conditional rendering based on schema selection */}
+                  {schemaActive ? (
+                    // Show only active schema data
+                    getAllRowData().map(({ key, value, index }) => {
+                      const isHidden = hiddenModalRows.has(index)
+                      const isSelected = selectedModalRows.includes(index)
+                      
+                      if (isHidden) return null
+                      
+                      return (
+                        <TableRow 
+                          key={key}
+                          selected={isSelected}
+                          onClick={() => handleToggleRowSelection(index)}
+                          sx={{ 
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            '&:nth-of-type(even)': { 
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.02)' : '#fafbfc' 
+                            },
+                            '&:nth-of-type(odd)': { 
+                              backgroundColor: 'background.paper' 
+                            },
+                            '&.Mui-selected': {
+                              backgroundColor: darkMode ? 'rgba(33,150,243,0.2) !important' : '#e3f2fd !important',
+                              '&:hover': {
+                                backgroundColor: darkMode ? 'rgba(33,150,243,0.3) !important' : '#bbdefb !important'
+                              }
+                            },
+                            '&:hover': {
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.05) !important' : '#f6f8fa !important'
+                            }
+                          }}
+                        >
+                          <TableCell 
+                            sx={{ 
+                              textAlign: 'center',
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f8f9fa !important',
+                              fontWeight: 'bold',
+                              color: 'text.secondary',
+                              fontSize: '0.7rem !important',
+                              position: 'relative'
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Checkbox
+                                checked={!isHidden}
+                                onChange={(e) => {
+                                  e.stopPropagation()
+                                  handleToggleRowVisibility(index)
+                                }}
+                                icon={<VisibilityOffIcon sx={{ fontSize: '0.9rem' }} />}
+                                checkedIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
+                                size="small"
+                                sx={{ 
+                                  padding: 0,
+                                  color: 'success.main',
+                                  '&.Mui-checked': {
+                                    color: 'success.main'
+                                  }
+                                }}
+                              />
+                            </Box>
+                          </TableCell>
+                          <TableCell 
+                            component="th" 
+                            scope="row" 
+                            sx={{ 
+                              fontWeight: '600',
+                              color: 'text.primary',
+                              fontSize: '0.8rem !important',
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f6f8fa !important'
+                            }}
+                          >
+                            {getFieldDisplayName(key)}
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              fontSize: '0.8rem !important',
+                              color: 'text.primary'
+                            }}
+                          >
+                            {renderCellValue(key, value)}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })                  ) : (
+                    // Show side-by-side active and inactive schema data
+                    getCombinedRowData().map(({ key, activeValue, inactiveValue, index, isDifferent }) => {
+                      const isHidden = hiddenModalRows.has(index)
+                      const isSelected = selectedModalRows.includes(index)
+                      
+                      if (isHidden) return null
+                      
+                      return (
+                        <TableRow 
+                          key={key}
+                          selected={isSelected}
+                          onClick={() => handleToggleRowSelection(index)}
+                          sx={{ 
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            '&:nth-of-type(even)': { 
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.02)' : '#fafbfc' 
+                            },
+                            '&:nth-of-type(odd)': { 
+                              backgroundColor: 'background.paper' 
+                            },
+                            '&.Mui-selected': {
+                              backgroundColor: darkMode ? 'rgba(33,150,243,0.2) !important' : '#e3f2fd !important',
+                              '&:hover': {
+                                backgroundColor: darkMode ? 'rgba(33,150,243,0.3) !important' : '#bbdefb !important'
+                              }
+                            },
+                            '&:hover': {
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.05) !important' : '#f6f8fa !important'
+                            }
+                          }}
+                        >
+                          <TableCell 
+                            sx={{ 
+                              textAlign: 'center',
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f8f9fa !important',
+                              fontWeight: 'bold',
+                              color: 'text.secondary',
+                              fontSize: '0.7rem !important'
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Checkbox
+                                checked={!isHidden}
+                                onChange={(e) => {
+                                  e.stopPropagation()
+                                  handleToggleRowVisibility(index)
+                                }}
+                                icon={<VisibilityOffIcon sx={{ fontSize: '0.9rem' }} />}
+                                checkedIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
+                                size="small"
+                                sx={{ 
+                                  padding: 0,
+                                  color: 'success.main',
+                                  '&.Mui-checked': {
+                                    color: 'success.main'
+                                  }
+                                }}
+                              />
+                            </Box>
+                          </TableCell>
+                          <TableCell 
+                            component="th" 
+                            scope="row" 
+                            sx={{ 
+                              fontWeight: '600',
+                              color: 'text.primary',
+                              fontSize: '0.8rem !important',
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.03) !important' : '#f6f8fa !important'
+                            }}
+                          >
+                            {getFieldDisplayName(key)}
+                            {isDifferent && (
+                              <Chip 
+                                label="DIFF" 
+                                size="small" 
+                                color="warning"
+                                sx={{ 
+                                  ml: 1, 
+                                  height: 16, 
+                                  fontSize: '0.6rem',
+                                  '& .MuiChip-label': { px: 0.5 }
+                                }}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              fontSize: '0.8rem !important',
+                              color: 'text.primary',
+                              backgroundColor: isDifferent ? (darkMode ? 'rgba(76,175,80,0.1)' : '#e8f5e8') : 'inherit'
+                            }}
+                          >
+                            {renderCellValue(key, activeValue)}
+                          </TableCell>
+                          <TableCell 
+                            sx={{ 
+                              fontSize: '0.8rem !important',
+                              color: 'text.primary',
+                              backgroundColor: isDifferent ? (darkMode ? 'rgba(255,152,0,0.1)' : '#fff3e0') : 'inherit'
+                            }}
+                          >
+                            {renderCellValue(key, inactiveValue)}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 2, bgcolor: darkMode ? 'rgba(255,255,255,0.05)' : '#f5f5f5', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Button 
+              onClick={handleShowAllRows}
+              startIcon={<RestoreIcon />}
+              size="small"
+              variant="outlined"
+            >
+              Show All Rows
+            </Button>
+            {selectedModalRows.length > 0 && (
+              <Chip 
+                label={`${selectedModalRows.length} rows selected`} 
+                color="primary" 
+                size="small"
+                sx={{ ml: 2, height: 20 }}
+              />
+            )}
+            {hiddenModalRows.size > 0 && (
+              <Chip 
+                label={`${hiddenModalRows.size} rows hidden`} 
+                color="warning" 
+                size="small"
+                sx={{ ml: 1, height: 20 }}
+              />
+            )}
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Record Pagination */}
+            <Pagination 
+              count={tableData.length} 
+              page={currentRecordIndex + 1}
+              onChange={handleRecordPageChange}
+              size="small"
+              siblingCount={1}
+              boundaryCount={1}
+            />
+            
+            <Button onClick={handleClose} color="primary" variant="contained">
+              Close
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
+
+      {/* Context Menu for Modal */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+        PaperProps={{
+          sx: {
+            backgroundColor: 'background.paper',
+          }
+        }}
+      >
+        <MenuItem onClick={handleHideSelectedRows} disabled={selectedModalRows.length === 0}>
+          <ListItemIcon>
+            <VisibilityOffIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Hide Selected Rows ({selectedModalRows.length})</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleShowSelectedRows} disabled={selectedModalRows.length === 0}>
+          <ListItemIcon>
+            <VisibilityIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Show Selected Rows ({selectedModalRows.length})</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleShowAllRows}>
+          <ListItemIcon>
+            <RestoreIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Show All Rows</ListItemText>
+        </MenuItem>
+      </Menu>
+    </>
+  )
+}
+
+export default RecordDetailsModal
