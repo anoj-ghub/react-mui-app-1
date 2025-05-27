@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchDataForTable } from '../services/api';
-import { tableOptions } from '../utils/constants';
+// Removed import of tableOptions - now loaded dynamically from database
 
 /**
  * Custom hook for managing table data state, form inputs, and API calls
@@ -48,7 +48,7 @@ import { tableOptions } from '../utils/constants';
  * ```
  */
 const useTableData = () => {
-    const [selectedTable, setSelectedTable] = useState(tableOptions[0]);
+    const [selectedTable, setSelectedTable] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
     const [environment, setEnvironment] = useState('Production');
     const [date, setDate] = useState('');
@@ -76,7 +76,7 @@ const useTableData = () => {
     const clearInputs = () => {
         setAccountNumber('');
         setDate('');
-        setSelectedTable(tableOptions[0]);
+        setSelectedTable('');
         setEnvironment('Production');
     };
 

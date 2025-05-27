@@ -6,15 +6,12 @@
 
 /**
  * Available table options for selection
+ * @deprecated Use fetchTables() from services/api.js to load tables from database
  * @constant {Array<Object>} TABLE_OPTIONS
  * @property {string} value - The internal value for the table
  * @property {string} label - The display label for the table
  */
-export const TABLE_OPTIONS = [
-  { value: 'users', label: 'Users' },
-  { value: 'products', label: 'Products' },
-  { value: 'orders', label: 'Orders' },
-];
+// TABLE_OPTIONS moved to database - use useTableList hook or fetchTables() API call
 
 /**
  * Available environment options for deployment contexts

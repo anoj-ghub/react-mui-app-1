@@ -6,15 +6,18 @@
 
 import { 
   Box, Typography, FormControl, InputLabel, Select, MenuItem, 
-  TextField, Button, Grid, Card, CardContent, Chip
+  TextField, Button, Grid, Card, CardContent, Chip, CircularProgress,
+  Alert, IconButton, Autocomplete
 } from '@mui/material'
 import TableViewIcon from '@mui/icons-material/TableView'
 import StorageIcon from '@mui/icons-material/Storage'
 import SearchIcon from '@mui/icons-material/Search'
 import ClearIcon from '@mui/icons-material/Clear'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import useTableList from '../../hooks/useTableList'
 
 /** @constant {string[]} Available table options for selection */
-const tableOptions = ['Table 1', 'Table 2', 'Table 3', 'Table 4']
+// Removed hardcoded table options - now loaded from database via useTableList hook
 
 /**
  * Helper function to get environment chip color based on environment type
@@ -82,6 +85,9 @@ function ConfigurationPanel({
   setSelectedDate
 }) {
 
+  // Load table list from external database
+  const { tableOptions, loading: tableListLoading, error: tableListError, refetch } = useTableList();
+
   /** @constant {Object[]} Predefined date options with values and labels */
   const dateOptions = [
     { value: '', label: 'All Dates' },
@@ -118,41 +124,106 @@ function ConfigurationPanel({
           </Typography>
         </Box>
         <Grid container spacing={1}>
-          <Grid item xs={12} md={3}>
-            <FormControl 
-              fullWidth 
-              size="small"
-              sx={{ 
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 1,
-                  backgroundColor: 'background.paper',
-                  height: 32
-                },
-                '& .MuiInputLabel-root': {
-                  fontSize: '0.75rem'
+          <Grid item xs={12} md={3}>            {tableListError ? (
+              <Alert 
+                severity="warning" 
+                sx={{ fontSize: '0.75rem', py: 0.5 }}
+                action={
+                  <IconButton
+                    color="inherit"
+                    size="small"
+                    onClick={refetch}
+                    sx={{ fontSize: '0.7rem' }}
+                  >
+                    <RefreshIcon fontSize="small" />
+                  </IconButton>
                 }
-              }}
-            >
-              <InputLabel>Select Table</InputLabel>
-              <Select
-                value={selectedTable}
-                label="Select Table"
-                onChange={(e) => setSelectedTable(e.target.value)}
-                sx={{ fontSize: '0.8rem' }}
               >
-                <MenuItem value="" sx={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
-                  -- Select a table --
-                </MenuItem>
-                {tableOptions.map((table) => (
-                  <MenuItem key={table} value={table} sx={{ fontSize: '0.8rem' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <StorageIcon sx={{ mr: 0.5, fontSize: '0.7rem' }} />
-                      {table}
+                Failed to load tables. Click refresh to retry.
+              </Alert>            ) : (              <Autocomplete
+                fullWidth
+                size="small"
+                disabled={tableListLoading}
+                options={tableOptions}
+                groupBy={(option) => option.group}
+                getOptionLabel={(option) => option.label || ''}
+                value={tableOptions.find(option => option.value === selectedTable) || null}
+                onChange={(event, newValue) => {
+                  setSelectedTable(newValue ? newValue.value : '');
+                }}
+                loading={tableListLoading}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={tableListLoading ? 'Loading tables...' : 'Select Table'}
+                    placeholder="Search tables..."
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: tableListLoading ? (
+                        <CircularProgress size={16} sx={{ mr: 1 }} />
+                      ) : params.InputProps.startAdornment,
+                      sx: {
+                        borderRadius: 1,
+                        backgroundColor: 'background.paper',
+                        height: 32,
+                        fontSize: '0.8rem'
+                      }
+                    }}
+                    InputLabelProps={{
+                      ...params.InputLabelProps,
+                      sx: { fontSize: '0.75rem' }
+                    }}
+                  />
+                )}
+                renderGroup={(params) => (
+                  <li key={params.key}>
+                    <Box
+                      sx={{
+                        position: 'sticky',
+                        top: '-8px',
+                        padding: '4px 12px',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        color: 'primary.main',
+                        backgroundColor: 'background.paper',
+                        borderBottom: '1px solid',
+                        borderBottomColor: 'divider',
+                        zIndex: 1
+                      }}
+                    >
+                      {params.group}
                     </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                    <ul style={{ padding: 0 }}>{params.children}</ul>
+                  </li>
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ fontSize: '0.8rem', pl: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <StorageIcon sx={{ mr: 0.5, fontSize: '0.7rem', color: 'text.secondary' }} />
+                      {option.label}
+                    </Box>
+                  </Box>
+                )}
+                noOptionsText={tableListLoading ? "Loading..." : "No tables found"}
+                sx={{
+                  '& .MuiAutocomplete-inputRoot': {
+                    borderRadius: 1,
+                    backgroundColor: 'background.paper',
+                    height: 32
+                  },
+                  '& .MuiAutocomplete-groupLabel': {
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    color: 'primary.main'
+                  },
+                  '& .MuiAutocomplete-groupUl': {
+                    '& .MuiAutocomplete-option': {
+                      paddingLeft: '24px'
+                    }
+                  }
+                }}
+              />
+            )}
           </Grid>
 
           <Grid item xs={12} md={9}>            <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center', justifyContent: 'space-between' }}>

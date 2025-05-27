@@ -9,7 +9,7 @@ import { generateMockData } from '../../utils/mockDataGenerator'
 import { getColumns } from '../../utils/columnConfig'
 
 function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
-  const [selectedTable, setSelectedTable] = useState('Table 1')
+  const [selectedTable, setSelectedTable] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
   const [tableData, setTableData] = useState([])
