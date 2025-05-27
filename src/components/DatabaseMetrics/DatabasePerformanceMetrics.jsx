@@ -1,6 +1,37 @@
+/**
+ * @fileoverview Database performance metrics component displaying system statistics
+ * @author System
+ * @version 1.0.0
+ */
+
 import { Grid, Card, CardContent, Box, Typography, TextField } from '@mui/material'
 import SpeedIcon from '@mui/icons-material/Speed'
 
+/**
+ * Database performance metrics component that displays various database statistics
+ * 
+ * Features:
+ * - Real-time performance metrics display
+ * - Conditional data display based on table selection
+ * - Grid layout with responsive design
+ * - Read-only text fields for metric values
+ * - Dark mode theme support
+ * - Performance indicators (CPU, Memory, Disk I/O, etc.)
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.selectedTable - Currently selected table name
+ * @param {boolean} props.darkMode - Dark mode theme flag
+ * @returns {JSX.Element} Database performance metrics component
+ * 
+ * @example
+ * ```jsx
+ * <DatabasePerformanceMetrics
+ *   selectedTable="Table 1"
+ *   darkMode={false}
+ * />
+ * ```
+ */
 function DatabasePerformanceMetrics({ selectedTable, darkMode }) {
   // Database Performance metrics - show data only when table is selected
   const performanceFields = selectedTable ? {

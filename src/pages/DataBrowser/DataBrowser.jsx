@@ -15,6 +15,7 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
   const [tableData, setTableData] = useState([])
   const [columns, setColumns] = useState([])
   const [quickSearchText, setQuickSearchText] = useState('')
+  const [loading, setLoading] = useState(false)
   
   // Account number validation state
   const [accountNumberError, setAccountNumberError] = useState('')
@@ -41,11 +42,19 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
   useEffect(() => {
     // Only generate data if a table is selected
     if (selectedTable) {
-      const data = generateMockData(selectedTable)
-      setTableData(data)
+      setLoading(true)
+      // Simulate API loading delay
+      const loadingTimeout = setTimeout(() => {
+        const data = generateMockData(selectedTable)
+        setTableData(data)
+        setLoading(false)
+      }, 800) // 800ms loading delay to demonstrate spinner
+      
+      return () => clearTimeout(loadingTimeout)
     } else {
       // Clear data when no table is selected
       setTableData([])
+      setLoading(false)
     }
     setQuickSearchText('') // Reset search when table changes
   }, [selectedTable])
@@ -135,6 +144,7 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
     // Clear the grid - set empty data and columns
     setTableData([])
     setColumns([])
+    setLoading(false) // Reset loading state
   }
 
   const handleSubmit = () => {
@@ -190,6 +200,7 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
             setQuickSearchText={setQuickSearchText}
             environment={environment}
             darkMode={darkMode}
+            loading={loading}
           />
         </Box>
 

@@ -1,7 +1,52 @@
+/**
+ * @fileoverview Custom hook for managing table data state and API interactions
+ * @author System
+ * @version 1.0.0
+ */
+
 import { useState, useEffect } from 'react';
 import { fetchDataForTable } from '../services/api';
 import { tableOptions } from '../utils/constants';
 
+/**
+ * Custom hook for managing table data state, form inputs, and API calls
+ * 
+ * Features:
+ * - Table selection management
+ * - Account number and date filtering
+ * - Environment selection
+ * - Data fetching with loading states
+ * - Error handling
+ * - Input clearing functionality
+ * - Automatic refetch on parameter changes
+ * 
+ * @hook
+ * @returns {Object} Hook return object
+ * @returns {string} returns.selectedTable - Currently selected table
+ * @returns {Function} returns.setSelectedTable - Function to update selected table
+ * @returns {string} returns.accountNumber - Current account number filter
+ * @returns {Function} returns.setAccountNumber - Function to update account number
+ * @returns {string} returns.environment - Current environment selection
+ * @returns {Function} returns.setEnvironment - Function to update environment
+ * @returns {string} returns.date - Current date filter
+ * @returns {Function} returns.setDate - Function to update date filter
+ * @returns {Array} returns.data - Fetched table data array
+ * @returns {boolean} returns.loading - Loading state indicator
+ * @returns {string|null} returns.error - Error message if any
+ * @returns {Function} returns.clearInputs - Function to reset all inputs
+ * 
+ * @example
+ * ```jsx
+ * const {
+ *   selectedTable,
+ *   setSelectedTable,
+ *   data,
+ *   loading,
+ *   error,
+ *   clearInputs
+ * } = useTableData();
+ * ```
+ */
 const useTableData = () => {
     const [selectedTable, setSelectedTable] = useState(tableOptions[0]);
     const [accountNumber, setAccountNumber] = useState('');

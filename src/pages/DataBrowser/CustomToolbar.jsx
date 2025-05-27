@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Custom toolbar component for MUI DataGrid with export functionality
+ * @author System
+ * @version 1.0.0
+ */
+
 import { Box, Button } from '@mui/material'
 import { 
   GridToolbarContainer,
@@ -7,7 +13,37 @@ import {
 } from '@mui/x-data-grid'
 import DownloadIcon from '@mui/icons-material/Download'
 
+/**
+ * Custom toolbar component for DataGrid with built-in controls and custom export functionality
+ * 
+ * Features:
+ * - Standard DataGrid toolbar controls (columns, density, export)
+ * - Custom JSON export with metadata
+ * - Automatic file download
+ * - Environment and table context included in exports
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {Array} props.tableData - Array of data objects in the grid
+ * @param {string} props.selectedTable - Currently selected table name
+ * @param {string} props.environment - Current environment name
+ * @returns {JSX.Element} Custom toolbar component
+ * 
+ * @example
+ * ```jsx
+ * <CustomToolbar
+ *   tableData={[{id: 1, name: "Item"}]}
+ *   selectedTable="Table 1"
+ *   environment="Development"
+ * />
+ * ```
+ */
 function CustomToolbar({ tableData, selectedTable, environment }) {
+  /**
+   * Downloads data as JSON file with custom filename
+   * @param {Object|Array} data - Data to be downloaded
+   * @param {string} filename - Name of the file to be downloaded
+   */
   const downloadJSON = (data, filename) => {
     const jsonString = JSON.stringify(data, null, 2)
     const blob = new Blob([jsonString], { type: 'application/json' })
@@ -21,6 +57,10 @@ function CustomToolbar({ tableData, selectedTable, environment }) {
     URL.revokeObjectURL(url)
   }
 
+  /**
+   * Handles the export of table data as JSON
+   * Gathers necessary data and triggers download
+   */
   const handleExportJSON = () => {
     const exportData = {
       table: selectedTable,

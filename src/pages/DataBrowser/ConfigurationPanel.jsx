@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Configuration panel component for data source selection and filtering
+ * @author System
+ * @version 1.0.0
+ */
+
 import { 
   Box, Typography, FormControl, InputLabel, Select, MenuItem, 
   TextField, Button, Grid, Card, CardContent, Chip
@@ -7,9 +13,14 @@ import StorageIcon from '@mui/icons-material/Storage'
 import SearchIcon from '@mui/icons-material/Search'
 import ClearIcon from '@mui/icons-material/Clear'
 
+/** @constant {string[]} Available table options for selection */
 const tableOptions = ['Table 1', 'Table 2', 'Table 3', 'Table 4']
 
-// Helper function to get environment chip color
+/**
+ * Helper function to get environment chip color based on environment type
+ * @param {string} env - Environment name (Development, Pre-prod, Production)
+ * @returns {string} MUI color variant for the chip
+ */
 const getEnvironmentColor = (env) => {
   switch (env) {
     case 'Development': return 'success'
@@ -19,6 +30,44 @@ const getEnvironmentColor = (env) => {
   }
 }
 
+/**
+ * Configuration panel component for data source selection and filtering options
+ * 
+ * Features:
+ * - Table selection dropdown
+ * - Account number input with validation
+ * - Date selection dropdown with predefined options
+ * - Submit and clear action buttons
+ * - Real-time validation feedback
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.selectedTable - Currently selected table
+ * @param {Function} props.setSelectedTable - Function to update selected table
+ * @param {string} props.accountNumber - Current account number value
+ * @param {Function} props.setAccountNumber - Function to update account number
+ * @param {string} props.accountNumberError - Account number validation error message
+ * @param {boolean} props.isAccountNumberValid - Account number validation status
+ * @param {Function} props.handleSubmit - Function to handle form submission
+ * @param {Function} props.handleClear - Function to clear all form fields
+ * @param {boolean} props.darkMode - Dark mode theme flag
+ * @param {string} props.selectedDate - Currently selected date
+ * @param {Function} props.setSelectedDate - Function to update selected date
+ * @returns {JSX.Element} Configuration panel component
+ * 
+ * @example
+ * ```jsx
+ * <ConfigurationPanel
+ *   selectedTable="Table 1"
+ *   setSelectedTable={setTable}
+ *   accountNumber="1234567890"
+ *   setAccountNumber={setAccount}
+ *   handleSubmit={onSubmit}
+ *   handleClear={onClear}
+ *   darkMode={false}
+ * />
+ * ```
+ */
 function ConfigurationPanel({ 
   selectedTable, 
   setSelectedTable, 
@@ -33,7 +82,7 @@ function ConfigurationPanel({
   setSelectedDate
 }) {
 
-  // Predefined date options
+  /** @constant {Object[]} Predefined date options with values and labels */
   const dateOptions = [
     { value: '', label: 'All Dates' },
     { value: '2025-05-24', label: 'Today (2025-05-24)' },

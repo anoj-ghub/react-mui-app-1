@@ -1,6 +1,38 @@
+/**
+ * @fileoverview System information component displaying database and server details
+ * @author System
+ * @version 1.0.0
+ */
+
 import { Grid, Card, CardContent, Box, Typography, TextField } from '@mui/material'
 import StorageIcon from '@mui/icons-material/Storage'
 
+/**
+ * System information component that displays database and server configuration details
+ * 
+ * Features:
+ * - System configuration display
+ * - Server and database information
+ * - Conditional data display based on table selection
+ * - Grid layout with responsive design
+ * - Read-only text fields for system values
+ * - Dark mode theme support
+ * - Security and backup status indicators
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.selectedTable - Currently selected table name
+ * @param {boolean} props.darkMode - Dark mode theme flag
+ * @returns {JSX.Element} System information component
+ * 
+ * @example
+ * ```jsx
+ * <SystemInformation
+ *   selectedTable="Table 1"
+ *   darkMode={false}
+ * />
+ * ```
+ */
 function SystemInformation({ selectedTable, darkMode }) {
   // Additional read-only field values - show data only when table is selected
   const additionalFields = selectedTable ? {

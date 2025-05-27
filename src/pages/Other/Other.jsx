@@ -1,6 +1,24 @@
+/**
+ * @fileoverview Other page component displaying under construction message
+ * @author System
+ * @version 1.0.0
+ */
+
 import { Typography, Paper, Box } from '@mui/material'
 import ConstructionIcon from '@mui/icons-material/Construction'
 
+/**
+ * Other page component showing a placeholder "under construction" message
+ * 
+ * Features:
+ * - Construction icon display
+ * - Centered layout
+ * - Professional placeholder message
+ * - Consistent styling with app theme
+ * 
+ * @component
+ * @returns {JSX.Element} Other page component
+ */
 function Other() {
   return (
     <Paper elevation={3} sx={{ p: 4, m: 2, textAlign: 'center' }}>

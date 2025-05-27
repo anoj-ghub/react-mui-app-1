@@ -1,6 +1,16 @@
+/**
+ * @fileoverview Header component for the Data Browser page with environment indicator
+ * @author System
+ * @version 1.0.0
+ */
+
 import { Box, Typography, Divider, Chip } from '@mui/material'
 
-// Helper function to get environment chip color
+/**
+ * Helper function to get environment chip color based on environment type
+ * @param {string} env - Environment name (Development, Testing, Production)
+ * @returns {string} MUI color variant for the chip
+ */
 const getEnvironmentColor = (env) => {
   switch (env) {
     case 'Development': return 'success'
@@ -10,6 +20,25 @@ const getEnvironmentColor = (env) => {
   }
 }
 
+/**
+ * Header component for the Data Browser page displaying title and environment indicator
+ * 
+ * Features:
+ * - Gradient styled title
+ * - Environment chip with color coding
+ * - Responsive layout with proper spacing
+ * - Subtitle with descriptive text
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.environment - Current environment (Development, Testing, Production)
+ * @returns {JSX.Element} Data browser header component
+ * 
+ * @example
+ * ```jsx
+ * <DataBrowserHeader environment="Development" />
+ * ```
+ */
 function DataBrowserHeader({ environment }) {return (
     <Box sx={{ mb: 1.5 }}> {/* Reduced margin bottom */}      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}> {/* Reduced margin */}
         <Box>

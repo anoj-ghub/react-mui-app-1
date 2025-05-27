@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Application drawer component with navigation and settings
+ * @author System
+ * @version 1.0.0
+ */
+
 import { useState } from 'react'
 import {
   Drawer,
@@ -27,6 +33,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import HomeIcon from '@mui/icons-material/Home'
 import DatasetIcon from '@mui/icons-material/Dataset'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
+import TableViewIcon from '@mui/icons-material/TableView'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import SettingsIcon from '@mui/icons-material/Settings'
@@ -35,16 +42,47 @@ import DarkModeIcon from '@mui/icons-material/DarkMode'
 import EnvironmentIcon from '@mui/icons-material/Computer'
 import CloseIcon from '@mui/icons-material/Close'
 
+/** @constant {number} Width of the drawer when expanded */
 const drawerWidth = 240
+
+/** @constant {number} Width of the drawer when collapsed */
 const miniDrawerWidth = 60
+
+/** @constant {string[]} Available environment options */
 const environmentOptions = ['Development', 'Pre-prod', 'Production']
 
+/** @constant {Object[]} Menu items with names and icons */
 const menuItems = [
   { name: 'Home', icon: <HomeIcon /> },
   { name: 'Data Browser', icon: <DatasetIcon /> },
+  { name: 'Table Demo', icon: <TableViewIcon /> },
   { name: 'Other', icon: <MoreHorizIcon /> }
 ]
 
+/**
+ * Application drawer component providing navigation and global settings
+ * 
+ * Features:
+ * - Collapsible navigation drawer
+ * - Menu items with icons and tooltips
+ * - Environment selection
+ * - Dark/light mode toggle
+ * - Settings popover
+ * - Responsive design
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {boolean} props.open - Drawer open/closed state
+ * @param {Function} props.onClose - Function to close the drawer
+ * @param {Function} props.onMenuClick - Function to toggle drawer
+ * @param {string} props.selectedPage - Currently selected page
+ * @param {Function} props.onPageSelect - Function to select a page
+ * @param {string} props.environment - Current environment
+ * @param {Function} props.setEnvironment - Function to set environment
+ * @param {boolean} props.darkMode - Dark mode state
+ * @param {Function} props.setDarkMode - Function to toggle dark mode
+ * @returns {JSX.Element} Application drawer component
+ */
 function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, environment, setEnvironment, darkMode, setDarkMode }) {
   const [settingsAnchorEl, setSettingsAnchorEl] = useState(null)
   const settingsOpen = Boolean(settingsAnchorEl)

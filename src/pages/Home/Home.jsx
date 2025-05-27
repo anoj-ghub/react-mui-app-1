@@ -1,5 +1,23 @@
+/**
+ * @fileoverview Home page component with application overview and features
+ * @author System
+ * @version 1.0.0
+ */
+
 import { Typography, Paper, Box } from '@mui/material'
 
+/**
+ * Home page component displaying welcome message and application features
+ * 
+ * Features:
+ * - Welcome message
+ * - Application overview
+ * - Feature list
+ * - Technology stack information
+ * 
+ * @component
+ * @returns {JSX.Element} Home page component
+ */
 function Home() {
   return (
     <Paper elevation={3} sx={{ p: 4, m: 2 }}>
