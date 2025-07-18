@@ -1,9 +1,3 @@
-/**
- * @fileoverview Data grid section component using the reusable data table with custom toolbar
- * @author System
- * @version 1.0.0
- */
-
 import React from 'react'
 import ReusableDataTable from '../../components/ReusableDataTable'
 import CustomToolbar from './CustomToolbar'
@@ -58,15 +52,14 @@ function DataGridSection({
   /**
    * Create custom toolbar component with required props
    * @returns {JSX.Element} Custom toolbar component
-   */
-  const renderToolbar = () => (
+   */  const renderToolbar = () => (
     <CustomToolbar 
       tableData={tableData}
       selectedTable={selectedTable}
       environment={environment}
     />
   )
-
+  
   return (
     <ReusableDataTable
       title={selectedTable ? `${selectedTable} Data` : 'No Table Selected'}
@@ -74,11 +67,9 @@ function DataGridSection({
       columns={columns}
       loading={loading}
       searchText={quickSearchText}
-      onSearchChange={setQuickSearchText}
-      darkMode={darkMode}
-      height="700px"
-      density="compact"
-      initialPageSize={25}
+      onSearchChange={setQuickSearchText}      darkMode={darkMode}
+      height="850px"
+      initialPageSize={50}
       pageSizeOptions={[10, 25, 50, 100]}
       enableSearch={true}
       searchPlaceholder="Search across all columns"
@@ -89,6 +80,9 @@ function DataGridSection({
         height: '100%',
         display: 'flex',
         flexDirection: 'column'
+      }}
+      gridProps={{
+        density: 'compact'
       }}
     />
   )

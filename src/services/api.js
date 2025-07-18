@@ -47,6 +47,12 @@ export const fetchTables = async () => {
         // For demo purposes, return mock data when external DB is not available
         // In production, you would handle this error appropriately
         const mockTables = [
+            // Original test tables for debugging
+            { value: 'Table 1', label: 'Table 1 (Test)', group: 'Test Tables' },
+            { value: 'Table 2', label: 'Table 2 (Test)', group: 'Test Tables' },
+            { value: 'Table 3', label: 'Table 3 (Test)', group: 'Test Tables' },
+            { value: 'Table 4', label: 'Table 4 (Test)', group: 'Test Tables' },
+            
             // Customer & User Management
             { value: 'customer_accounts', label: 'Customer Accounts', group: 'Customer Management' },
             { value: 'user_sessions', label: 'User Sessions', group: 'Customer Management' },
@@ -81,6 +87,55 @@ export const fetchTables = async () => {
         await new Promise(resolve => setTimeout(resolve, 1200));
         
         return mockTables;
+    }
+};
+
+/**
+ * Fetches data for a specific table with filters from the API
+ * @async
+ * @function fetchDataForTable
+ * @param {string} tableName - The name of the table to fetch data for
+ * @param {string} accountNumber - Account number filter
+ * @param {string} environment - Environment filter
+ * @param {string} date - Date filter
+ * @returns {Promise<Array>} Promise resolving to array of table data
+ * @throws {Error} When API request fails
+ * 
+ * @example
+ * ```javascript
+ * const data = await fetchDataForTable('users', '123456', 'Production', '2025-01-01');
+ * console.log(data);
+ * ```
+ */
+export const fetchDataForTable = async (tableName, accountNumber = '', environment = 'Production', date = '') => {
+    try {
+        // For demo purposes, we'll generate mock data when external API fails
+        // In production, you would make an actual API call
+        const response = await axios.get(`${API_BASE_URL}/data/${tableName}`, {
+            timeout: DB_TIMEOUT,
+            params: {
+                accountNumber,
+                environment,
+                date
+            },
+            headers: {
+                'Authorization': 'Bearer your-api-token',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching data for table ${tableName}:`, error);
+        
+        // Fallback to mock data generator for demo purposes
+        const { generateMockData } = await import('../utils/mockDataGenerator');
+        const mockData = generateMockData(tableName);
+        
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        return mockData;
     }
 };
 

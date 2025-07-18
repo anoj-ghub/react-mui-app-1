@@ -14,7 +14,8 @@ import { useState } from 'react'
 import {
   Dialog,
   DialogTitle,
-  DialogContent,  DialogActions,
+  DialogContent,
+  DialogActions,
   IconButton,
   Table,
   TableBody,
@@ -22,11 +23,6 @@ import {
   TableContainer,
   TableRow,
   TableHead,
-  Checkbox,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
   Pagination,
   Button,
   Box,
@@ -47,14 +43,15 @@ import ViewListIcon from '@mui/icons-material/ViewList'
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import DownloadIcon from '@mui/icons-material/Download'
-import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import RestoreIcon from '@mui/icons-material/Restore'
 import SchemaIcon from '@mui/icons-material/Schema'
 import DataObjectIcon from '@mui/icons-material/DataObject'
 import FilterAltIcon from '@mui/icons-material/FilterAlt'
 import InfoIcon from '@mui/icons-material/Info'
+import LaunchIcon from '@mui/icons-material/Launch'
 import { formatAmount, formatAmountByType, DEFAULT_AMOUNT_FIELDS, isValidNOD } from '../../utils/amountFormatter'
+import { PipeDelimitedDataModal } from '../../components'
+import { isPipeDelimitedData, getPipeDelimitedPreview, countPipeDelimitedItems } from '../../utils/pipeDelimitedDetector'
 
 /**
  * Record details modal component with advanced features and NOD (Number of Decimals) formatting
@@ -142,11 +139,7 @@ function RecordDetailsModal({
   /** @type {[Set, Function]} Hidden modal rows state for field visibility */
   const [hiddenModalRows, setHiddenModalRows] = useState(new Set())
   
-  /** @type {[Object|null, Function]} Context menu anchor and state */
-  const [contextMenu, setContextMenu] = useState(null)
   
-  /** @type {[Array, Function]} Selected modal rows for bulk operations */
-  const [selectedModalRows, setSelectedModalRows] = useState([])
   
   /** @type {[boolean, Function]} Schema toggle state (active only vs active + inactive) */
   const [schemaActive, setSchemaActive] = useState(true)
@@ -166,6 +159,12 @@ function RecordDetailsModal({
   /** @type {[Object|null, Function]} Selected field information for popover */
   const [selectedFieldInfo, setSelectedFieldInfo] = useState(null)
 
+  /** @type {[Object, Function]} Pipe-delimited modal state */
+  const [pipeDelimitedModal, setPipeDelimitedModal] = useState({
+    open: false,
+    data: '',
+    fieldName: ''
+  })
   /**
    * Navigates to the previous record in the dataset
    */
@@ -173,7 +172,6 @@ function RecordDetailsModal({
     if (currentRecordIndex > 0) {
       const newIndex = currentRecordIndex - 1
       setCurrentRecordIndex(newIndex)
-      setSelectedModalRows([]) // Reset modal row selection
       setHiddenModalRows(new Set()) // Reset hidden rows
     }
   }
@@ -185,11 +183,9 @@ function RecordDetailsModal({
     if (currentRecordIndex < tableData.length - 1) {
       const newIndex = currentRecordIndex + 1
       setCurrentRecordIndex(newIndex)
-      setSelectedModalRows([]) // Reset modal row selection
       setHiddenModalRows(new Set()) // Reset hidden rows
     }
   }
-
   /**
    * Handles record pagination when the page is changed
    * @param {Object} event - The event object
@@ -199,44 +195,10 @@ function RecordDetailsModal({
     const newIndex = page - 1
     if (newIndex >= 0 && newIndex < tableData.length) {
       setCurrentRecordIndex(newIndex)
-      setSelectedModalRows([]) // Reset modal row selection
       setHiddenModalRows(new Set()) // Reset hidden rows
     }
   }
 
-  /**
-   * Handles the context menu opening for row operations
-   * @param {Object} event - The context menu event
-   */
-  const handleRowContextMenu = (event) => {
-    event.preventDefault()
-    if (selectedModalRows.length > 0) {
-      setContextMenu({
-        mouseX: event.clientX - 2,
-        mouseY: event.clientY - 4,
-      })
-    }
-  }
-
-  /**
-   * Closes the context menu
-   */
-  const handleCloseContextMenu = () => {
-    setContextMenu(null)
-  }
-
-  /**
-   * Toggles the selection of a modal row
-   * @param {number} index - The index of the row to toggle
-   */
-  const handleToggleRowSelection = (index) => {
-    setSelectedModalRows(prev => {
-      const newSelection = prev.includes(index)
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-      return newSelection
-    })
-  }
 
   /**
    * Toggles the visibility of a modal row
@@ -253,44 +215,11 @@ function RecordDetailsModal({
       return newHidden
     })
   }
-
-  /**
-   * Hides the selected modal rows
-   */
-  const handleHideSelectedRows = () => {
-    setHiddenModalRows(prev => {
-      const newHidden = new Set(prev)
-      selectedModalRows.forEach(index => {
-        newHidden.add(index)
-      })
-      return newHidden
-    })
-    setSelectedModalRows([])
-    handleCloseContextMenu()
-  }
-
-  /**
-   * Shows the selected modal rows
-   */
-  const handleShowSelectedRows = () => {
-    setHiddenModalRows(prev => {
-      const newHidden = new Set(prev)
-      selectedModalRows.forEach(index => {
-        newHidden.delete(index)
-      })
-      return newHidden
-    })
-    setSelectedModalRows([])
-    handleCloseContextMenu()
-  }
-
   /**
    * Shows all modal rows
    */
   const handleShowAllRows = () => {
     setHiddenModalRows(new Set())
-    setSelectedModalRows([])
-    handleCloseContextMenu()
   }
 
   // JSON Export Functions
@@ -346,6 +275,30 @@ function RecordDetailsModal({
   const handleCloseFieldInfo = () => {
     setFieldInfoAnchor(null)
     setSelectedFieldInfo(null)
+  }
+
+  /**
+   * Opens the pipe-delimited data modal
+   * @param {string} value - The pipe-delimited data value
+   * @param {string} fieldName - The name of the field
+   */
+  const handleOpenPipeDelimitedModal = (value, fieldName) => {
+    setPipeDelimitedModal({
+      open: true,
+      data: value,
+      fieldName: fieldName
+    })
+  }
+
+  /**
+   * Closes the pipe-delimited data modal
+   */
+  const handleClosePipeDelimitedModal = () => {
+    setPipeDelimitedModal({
+      open: false,
+      data: '',
+      fieldName: ''
+    })
   }
 
   // Get field details for the popover
@@ -518,6 +471,54 @@ function RecordDetailsModal({
    * @returns {JSX.Element} The rendered cell value
    */
   const renderCellValue = (key, value) => {
+    // Check if this is pipe-delimited data first
+    if (isPipeDelimitedData(value)) {
+      const itemCount = countPipeDelimitedItems(value)
+      const preview = getPipeDelimitedPreview(value, 2)
+      
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ flexGrow: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                {preview}
+              </Typography>
+              <Chip 
+                label={`${itemCount} items`} 
+                size="small" 
+                color="info" 
+                variant="outlined"
+                sx={{ fontSize: '0.65rem', height: 18 }}
+              />
+              <IconButton
+                size="small"
+                onClick={() => handleOpenPipeDelimitedModal(value, key)}
+                sx={{ 
+                  p: 0.25,
+                  color: 'primary.main',
+                  '&:hover': {
+                    backgroundColor: 'primary.main',
+                    color: 'white'
+                  }
+                }}
+                title="View pipe-delimited data in table format"
+              >
+                <LaunchIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Box>
+            <Typography 
+              variant="caption" 
+              color="text.secondary"
+              sx={{ fontSize: '0.7rem' }}
+            >
+              Pipe-delimited data • Click icon to view in table
+            </Typography>
+          </Box>
+        </Box>
+      )
+    }
+
+    // Handle regular field types
     if (key === 'status') {
       return (
         <Chip 
@@ -637,13 +638,10 @@ function RecordDetailsModal({
     
     return allRows
   }
-
   /**
    * Closes the modal and resets state
    */
   const handleClose = () => {
-    setSelectedModalRows([])
-
     setHiddenModalRows(new Set())
     onClose()
   }
@@ -746,8 +744,7 @@ function RecordDetailsModal({
             px: 2,
             justifyContent: 'space-between'
           }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        >          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <FormGroup row>
               <FormControlLabel
                 control={
@@ -756,17 +753,79 @@ function RecordDetailsModal({
                     onChange={(e) => setSchemaActive(!e.target.checked)}
                     size="small"
                     color="success"
+                    sx={{
+                      '& .MuiSwitch-switchBase': {
+                        '&.Mui-checked': {
+                          transform: 'translateX(16px)',
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#4caf50',
+                            opacity: 1,
+                            border: 'none',
+                          },
+                          '& .MuiSwitch-thumb': {
+                            backgroundColor: '#ffffff',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          },
+                        },
+                      },
+                      '& .MuiSwitch-thumb': {
+                        width: 18,
+                        height: 18,
+                        backgroundColor: '#ffffff',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        transition: 'all 0.2s ease-in-out',
+                      },
+                      '& .MuiSwitch-track': {
+                        borderRadius: 12,
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)',
+                        opacity: 1,
+                        transition: 'all 0.2s ease-in-out',
+                        border: `1px solid ${darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}`,
+                      },
+                    }}
                   />
                 }
                 label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <SchemaIcon sx={{ fontSize: '1rem' }} />
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 0.5,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                    }
+                  }}>
+                    <SchemaIcon sx={{ 
+                      fontSize: '1rem',
+                      color: !schemaActive ? 'success.main' : 'text.secondary',
+                      transition: 'color 0.2s ease-in-out',
+                    }} />
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontSize: '0.8rem',
+                        fontWeight: !schemaActive ? 600 : 400,
+                        color: !schemaActive ? 'success.main' : 'text.primary',
+                        transition: 'all 0.2s ease-in-out',
+                      }}
+                    >
                       {schemaActive ? 'Active Schema Only' : 'Show Inactive Schema'}
                     </Typography>
                   </Box>
                 }
-                sx={{ mr: 2 }}
+                sx={{ 
+                  mr: 2,
+                  p: 1,
+                  borderRadius: 2,
+                  border: `1px solid ${!schemaActive ? 'rgba(76, 175, 80, 0.3)' : 'transparent'}`,
+                  backgroundColor: !schemaActive ? 'rgba(76, 175, 80, 0.05)' : 'transparent',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: !schemaActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(0,0,0,0.04)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  }
+                }}
               />
               
 
@@ -778,23 +837,92 @@ function RecordDetailsModal({
                     size="small"
                     color="primary"
                     disabled={schemaActive}
+                    sx={{
+                      '& .MuiSwitch-switchBase': {
+                        '&.Mui-checked': {
+                          transform: 'translateX(16px)',
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#2196f3',
+                            opacity: 1,
+                            border: 'none',
+                          },
+                          '& .MuiSwitch-thumb': {
+                            backgroundColor: '#ffffff',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          },
+                        },
+                        '&.Mui-disabled': {
+                          '& .MuiSwitch-thumb': {
+                            backgroundColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.26)',
+                          },
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                          },
+                        },
+                      },
+                      '& .MuiSwitch-thumb': {
+                        width: 18,
+                        height: 18,
+                        backgroundColor: '#ffffff',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        transition: 'all 0.2s ease-in-out',
+                      },
+                      '& .MuiSwitch-track': {
+                        borderRadius: 12,
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)',
+                        opacity: 1,
+                        transition: 'all 0.2s ease-in-out',
+                        border: `1px solid ${darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}`,
+                      },
+                    }}
                   />
                 }
                 label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <DataObjectIcon sx={{ fontSize: '1rem' }} />
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 0.5,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: schemaActive ? 'none' : 'translateY(-1px)',
+                    }
+                  }}>
+                    <DataObjectIcon sx={{ 
+                      fontSize: '1rem',
+                      color: schemaActive 
+                        ? 'text.disabled' 
+                        : (fullDataMode ? 'primary.main' : 'secondary.main'),
+                      transition: 'color 0.2s ease-in-out',
+                    }} />
                     <Typography 
                       variant="body2" 
                       sx={{ 
                         fontSize: '0.8rem',
-                        color: schemaActive ? 'text.disabled' : 'inherit'
+                        fontWeight: (!schemaActive && fullDataMode) ? 600 : 400,
+                        color: schemaActive ? 'text.disabled' : 'inherit',
+                        transition: 'all 0.2s ease-in-out',
                       }}
                     >
                       {fullDataMode ? 'Full Data' : 'Delta Data'}
                     </Typography>
                   </Box>
                 }
-                sx={{ mr: 2 }}
+                sx={{ 
+                  mr: 2,
+                  p: 1,
+                  borderRadius: 2,
+                  border: `1px solid ${(!schemaActive && fullDataMode) ? 'rgba(33, 150, 243, 0.3)' : 'transparent'}`,
+                  backgroundColor: (!schemaActive && fullDataMode) ? 'rgba(33, 150, 243, 0.05)' : 'transparent',
+                  opacity: schemaActive ? 0.6 : 1,
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: schemaActive 
+                      ? 'transparent' 
+                      : ((!schemaActive && fullDataMode) ? 'rgba(33, 150, 243, 0.1)' : 'rgba(0,0,0,0.04)'),
+                    transform: schemaActive ? 'none' : 'translateY(-1px)',
+                    boxShadow: schemaActive ? 'none' : '0 2px 8px rgba(0,0,0,0.1)',
+                  }
+                }}
               />
                 <FormControlLabel
                 control={
@@ -803,23 +931,112 @@ function RecordDetailsModal({
                     onChange={(e) => setNodApplied(e.target.checked)}
                     size="small"
                     color="warning"
+                    sx={{
+                      '& .MuiSwitch-switchBase': {
+                        '&.Mui-checked': {
+                          transform: 'translateX(16px)',
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: '#ff9800',
+                            opacity: 1,
+                            border: 'none',
+                          },
+                          '& .MuiSwitch-thumb': {
+                            backgroundColor: '#ffffff',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          },
+                        },
+                      },
+                      '& .MuiSwitch-thumb': {
+                        width: 18,
+                        height: 18,
+                        backgroundColor: '#ffffff',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        transition: 'all 0.2s ease-in-out',
+                      },
+                      '& .MuiSwitch-track': {
+                        borderRadius: 12,
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)',
+                        opacity: 1,
+                        transition: 'all 0.2s ease-in-out',
+                        border: `1px solid ${darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}`,
+                      },
+                    }}
                   />
                 }
                 label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <FilterAltIcon sx={{ fontSize: '1rem' }} />
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 0.5,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                    }
+                  }}>
+                    <FilterAltIcon sx={{ 
+                      fontSize: '1rem',
+                      color: nodApplied ? 'warning.main' : 'text.secondary',
+                      transition: 'color 0.2s ease-in-out',
+                    }} />
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontSize: '0.8rem',
+                        fontWeight: nodApplied ? 600 : 400,
+                        color: nodApplied ? 'warning.main' : 'text.primary',
+                        transition: 'all 0.2s ease-in-out',
+                      }}
+                    >
                       Apply NOD
                     </Typography>
                   </Box>
                 }
+                sx={{ 
+                  p: 1,
+                  borderRadius: 2,
+                  border: `1px solid ${nodApplied ? 'rgba(255, 152, 0, 0.3)' : 'transparent'}`,
+                  backgroundColor: nodApplied ? 'rgba(255, 152, 0, 0.05)' : 'transparent',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: nodApplied ? 'rgba(255, 152, 0, 0.1)' : 'rgba(0,0,0,0.04)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  }
+                }}
               />
-              
-
-              {/* NOD Value Selector - only show when NOD is applied */}
+                  {/* NOD Value Selector - only show when NOD is applied */}
               {nodApplied && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 2 }}>
-                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  ml: 2,
+                  p: 1,
+                  borderRadius: 2,
+                  backgroundColor: 'rgba(255, 152, 0, 0.05)',
+                  border: '1px solid rgba(255, 152, 0, 0.2)',
+                  transition: 'all 0.3s ease-in-out',
+                  animation: 'slideIn 0.3s ease-out',
+                  '@keyframes slideIn': {
+                    from: {
+                      opacity: 0,
+                      transform: 'translateX(-20px)',
+                    },
+                    to: {
+                      opacity: 1,
+                      transform: 'translateX(0)',
+                    },
+                  },
+                }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontSize: '0.75rem', 
+                      color: 'warning.main',
+                      fontWeight: 600,
+                      textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                    }}
+                  >
                     Decimals:
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -833,15 +1050,33 @@ function RecordDetailsModal({
                         variant={nodValue === decimals ? 'filled' : 'outlined'}
                         onClick={() => setNodValue(decimals)}
                         sx={{ 
-                          height: 18, 
+                          height: 22, 
                           fontSize: '0.7rem',
-                          minWidth: 24,
-                          '& .MuiChip-label': { px: 0.5 },
+                          minWidth: 28,
+                          fontWeight: nodValue === decimals ? 700 : 500,
+                          '& .MuiChip-label': { 
+                            px: 0.8,
+                            py: 0.2,
+                          },
                           cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          border: nodValue === decimals 
+                            ? '2px solid #ff9800' 
+                            : `1px solid ${darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.23)'}`,
+                          boxShadow: nodValue === decimals 
+                            ? '0 2px 8px rgba(255, 152, 0, 0.3)' 
+                            : '0 1px 3px rgba(0,0,0,0.1)',
                           '&:hover': {
                             backgroundColor: nodValue === decimals 
                               ? 'warning.dark' 
-                              : 'action.hover'
+                              : (darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
+                            transform: 'translateY(-2px) scale(1.05)',
+                            boxShadow: nodValue === decimals 
+                              ? '0 4px 12px rgba(255, 152, 0, 0.4)' 
+                              : '0 3px 6px rgba(0,0,0,0.15)',
+                          },
+                          '&:active': {
+                            transform: 'translateY(0) scale(0.98)',
                           }
                         }}
                       />
@@ -850,15 +1085,23 @@ function RecordDetailsModal({
                 </Box>
               )}
             </FormGroup>
-          </Box>
-
-          {/* Status indicators */}
+          </Box>          {/* Status indicators */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip 
               label={schemaActive ? 'Active Only' : 'Active + Inactive'} 
               size="small" 
               color={schemaActive ? 'primary' : 'success'}
-              sx={{ height: 20, fontSize: '0.7rem' }}
+              sx={{ 
+                height: 24, 
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 3px 6px rgba(0,0,0,0.15)',
+                }
+              }}
             />
             {!schemaActive && (
               <>
@@ -866,7 +1109,17 @@ function RecordDetailsModal({
                   label={fullDataMode ? 'Full' : 'Delta'} 
                   size="small" 
                   color={fullDataMode ? 'primary' : 'secondary'}
-                  sx={{ height: 20, fontSize: '0.7rem' }}
+                  sx={{ 
+                    height: 24, 
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 3px 6px rgba(0,0,0,0.15)',
+                    }
+                  }}
                 />
                 {!fullDataMode && (
                   <Chip 
@@ -874,15 +1127,37 @@ function RecordDetailsModal({
                     size="small" 
                     color="info"
                     variant="outlined"
-                    sx={{ height: 20, fontSize: '0.6rem' }}
+                    sx={{ 
+                      height: 24, 
+                      fontSize: '0.6rem',
+                      fontWeight: 500,
+                      border: '1px solid rgba(33, 150, 243, 0.5)',
+                      backgroundColor: 'rgba(33, 150, 243, 0.05)',
+                      transition: 'all 0.2s ease-in-out',
+                      animation: 'pulse 2s infinite',
+                      '@keyframes pulse': {
+                        '0%': {
+                          boxShadow: '0 0 0 0 rgba(33, 150, 243, 0.4)',
+                        },
+                        '70%': {
+                          boxShadow: '0 0 0 10px rgba(33, 150, 243, 0)',
+                        },
+                        '100%': {
+                          boxShadow: '0 0 0 0 rgba(33, 150, 243, 0)',
+                        },
+                      },
+                      '&:hover': {
+                        transform: 'translateY(-1px) scale(1.05)',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                      }
+                    }}
                   />
                 )}
               </>
             )}
           </Box>
         </Toolbar>
-        
-        <DialogContent sx={{ p: 0 }} onContextMenu={handleRowContextMenu}>
+          <DialogContent sx={{ p: 0 }}>
           {/* Record Data Table */}
           {selectedRow && (
             <TableContainer sx={{ 
@@ -908,59 +1183,95 @@ function RecordDetailsModal({
                   }
                 }}
               >
+                {!schemaActive && (
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Field</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Active Value</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem' }}>Inactive Value</TableCell>
+                    </TableRow>
+                  </TableHead>
+                )}
                 <TableBody>
-                  {displayFields.map((fieldDef) => {
-                    const { field, label } = fieldDef;
-                    const currentValue = getCurrentValue(field);
-                    const previousValue = getPreviousValue(field);
-                    const hasChanged = hasFieldChanged(field);
-                    
-                    return (
-                      <TableRow 
-                        key={field}
-                        sx={{
-                          backgroundColor: hasChanged 
-                            ? (darkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.1)')
-                            : 'transparent'
-                        }}
-                      >
-                        <TableCell 
-                          component="th" 
-                          sx={{ 
-                            fontWeight: 600,
-                            backgroundColor: darkMode ? 'rgba(255,255,255,0.02)' : '#f6f8fa',
-                            width: '30%',
-                            position: 'sticky',
-                            left: 0,
-                            zIndex: 1
+                  {(schemaActive ? getAllRowData() : getCombinedRowData())
+                    .filter((_, index) => !hiddenModalRows.has(index))
+                    .map((rowData, index) => {
+                      const isDifferent = !schemaActive && rowData.isDifferent
+                      
+                      return (
+                        <TableRow 
+                          key={schemaActive ? rowData.key : `${rowData.key}-combined`}
+                          sx={{
+                            backgroundColor: isDifferent 
+                              ? (darkMode ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 193, 7, 0.1)')
+                              : 'transparent',
+                            '&:hover': {
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'
+                            }
                           }}
                         >
-                          {label}
-                          {hasChanged && (
-                            <ChangeIndicator 
-                              sx={{ 
-                                ml: 1, 
-                                fontSize: '0.6rem',
-                                color: '#ff9800'
-                              }} 
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell sx={{ wordBreak: 'break-word' }}>
-                          {formatCellValue(currentValue, field)}
-                        </TableCell>
-                        {!schemaActive && (
-                          <TableCell sx={{ 
-                            wordBreak: 'break-word',
-                            opacity: 0.7,
-                            fontStyle: hasChanged ? 'italic' : 'normal'
-                          }}>
-                            {formatCellValue(previousValue, field)}
+                          <TableCell 
+                            component="th" 
+                            sx={{ 
+                              fontWeight: 600,
+                              backgroundColor: darkMode ? 'rgba(255,255,255,0.02)' : '#f6f8fa',
+                              width: '30%',
+                              position: 'sticky',
+                              left: 0,
+                              zIndex: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1
+                            }}
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleToggleRowVisibility(index)
+                              }}
+                              sx={{ p: 0.25 }}
+                            >
+                              <VisibilityOffIcon sx={{ fontSize: '0.9rem' }} />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleShowFieldInfo(e, schemaActive ? rowData.key : rowData.key)}
+                              sx={{ p: 0.25 }}
+                            >
+                              <InfoIcon sx={{ fontSize: '0.9rem' }} />
+                            </IconButton>
+                            {getFieldDisplayName(schemaActive ? rowData.key : rowData.key)}
+                            {isDifferent && (
+                              <Chip 
+                                label="Changed" 
+                                size="small" 
+                                color="warning" 
+                                variant="outlined"
+                                sx={{ 
+                                  height: 16, 
+                                  fontSize: '0.6rem',
+                                  '& .MuiChip-label': { px: 0.5 },
+                                  ml: 'auto'
+                                }} 
+                              />
+                            )}
                           </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })}
+                          <TableCell sx={{ wordBreak: 'break-word' }}>
+                            {renderCellValue(schemaActive ? rowData.key : rowData.key, schemaActive ? rowData.value : rowData.activeValue)}
+                          </TableCell>
+                          {!schemaActive && (
+                            <TableCell sx={{ 
+                              wordBreak: 'break-word',
+                              opacity: 0.7,
+                              fontStyle: isDifferent ? 'italic' : 'normal'
+                            }}>
+                              {renderCellValue(rowData.key, rowData.inactiveValue)}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      )
+                    })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -990,8 +1301,56 @@ function RecordDetailsModal({
             >
               Copy JSON
             </Button>
+          )}        </DialogActions>
+
+        {/* Field Info Popover */}
+        <Popover
+          open={Boolean(fieldInfoAnchor)}
+          anchorEl={fieldInfoAnchor}
+          onClose={handleCloseFieldInfo}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+        >
+          {selectedFieldInfo && (
+            <Box sx={{ p: 2, maxWidth: 300 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                {selectedFieldInfo.displayName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {selectedFieldInfo.description}
+              </Typography>
+              <Box sx={{ mt: 1 }}>
+                <Chip label={selectedFieldInfo.dataType} size="small" color="primary" sx={{ mr: 0.5 }} />
+                <Chip label={selectedFieldInfo.source} size="small" color="secondary" sx={{ mr: 0.5 }} />
+                {selectedFieldInfo.nullable && (
+                  <Chip label="Nullable" size="small" color="default" />
+                )}
+              </Box>
+              {selectedFieldInfo.constraints && selectedFieldInfo.constraints.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Constraints: {selectedFieldInfo.constraints.join(', ')}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           )}
-        </DialogActions>
+        </Popover>
+
+        {/* Pipe-Delimited Data Modal */}
+        <PipeDelimitedDataModal
+          open={pipeDelimitedModal.open}
+          onClose={handleClosePipeDelimitedModal}
+          data={pipeDelimitedModal.data}
+          fieldName={pipeDelimitedModal.fieldName}
+          darkMode={darkMode}
+        />
       </Dialog>
     </>
   );

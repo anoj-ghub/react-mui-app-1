@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Container, createTheme, ThemeProvider, CssBaseline, Box } from '@mui/material'
 import DataBrowserHeader from './DataBrowserHeader'
 import ConfigurationPanel from './ConfigurationPanel'
 import FilterPanel from './FilterPanel'
 import DataGridSection from './DataGridSection'
 import RecordDetailsModal from './RecordDetailsModal'
+import DisplayFieldsContainer from '../../components/DisplayFieldsContainer'
 import { generateMockData } from '../../utils/mockDataGenerator'
 import { getColumns } from '../../utils/columnConfig'
 
@@ -46,6 +47,7 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
       // Simulate API loading delay
       const loadingTimeout = setTimeout(() => {
         const data = generateMockData(selectedTable)
+        console.log('Generated data for table:', selectedTable, 'Data:', data)
         setTableData(data)
         setLoading(false)
       }, 800) // 800ms loading delay to demonstrate spinner
@@ -64,28 +66,28 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
     // Remove any non-numeric characters
     const cleanValue = value.replace(/\D/g, '')
     
-    // Validate length and format
     if (cleanValue.length === 0) {
-      setAccountNumberError('')
-      setIsAccountNumberValid(true)
-      return cleanValue
-    }
-    
-    if (cleanValue.length < 10) {
-      setAccountNumberError('Account number must be at least 10 digits')
+      setAccountNumberError('Account number is required')
       setIsAccountNumberValid(false)
-      return cleanValue
+      return false
     }
     
-    if (cleanValue.length > 15) {
-      setAccountNumberError('Account number cannot exceed 15 digits')
+    if (cleanValue.length < 8) {
+      setAccountNumberError('Account number must be at least 8 digits')
       setIsAccountNumberValid(false)
-      return cleanValue.slice(0, 15)
+      return false
     }
     
+    if (cleanValue.length > 12) {
+      setAccountNumberError('Account number cannot exceed 12 digits')
+      setIsAccountNumberValid(false)
+      return false
+    }
+    
+    // If validation passes
     setAccountNumberError('')
     setIsAccountNumberValid(true)
-    return cleanValue
+    return true
   }
 
   // Handle account number change with validation
@@ -104,11 +106,24 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
   // Separate effect for setting up columns after tableData is ready
   useEffect(() => {
     if (selectedTable && tableData.length > 0) {
-      setColumns(getColumns(selectedTable, handleViewDetails))
+      const cols = getColumns(selectedTable, handleViewDetails, tableData)
+      console.log('Generated columns for table:', selectedTable, 'Columns:', cols)
+      setColumns(cols)
     } else if (!selectedTable) {
       setColumns([])
     }
   }, [selectedTable, tableData, handleViewDetails])
+
+  // Add debugging for tableData changes
+  useEffect(() => {
+    console.log('TableData updated:', tableData?.length || 0, 'records')
+    console.log('Columns updated:', columns?.length || 0, 'columns')
+  }, [tableData, columns])
+
+  // Debug selected table changes
+  useEffect(() => {
+    console.log('Selected table changed to:', selectedTable)
+  }, [selectedTable])
 
   // Sync selectedRow with currentRecordIndex when pagination occurs
   useEffect(() => {
@@ -157,6 +172,13 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
     })
   }
 
+  // Test if data generation actually works
+  useEffect(() => {
+    console.log('Testing data generation for customer_accounts:')
+    const testData = generateMockData('customer_accounts')
+    console.log('Sample data:', testData?.slice(0, 2))
+  }, [])
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -170,7 +192,7 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
           flexDirection: 'column'
         }}
       >
-        <DataBrowserHeader environment={environment} />
+        <DataBrowserHeader environment={environment} darkMode={darkMode} />
         
         <ConfigurationPanel
           selectedTable={selectedTable}
@@ -190,6 +212,27 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
           selectedTable={selectedTable}
           darkMode={darkMode}
         />
+
+        {/* Display Fields Container - Show when no table is selected */}
+        {/* {!selectedTable && (
+          <Box sx={{ mb: 3 }}>
+            <DisplayFieldsContainer 
+              darkMode={darkMode}
+              data={{
+                fullName: 'Sarah Johnson',
+                email: 'sarah.johnson@techcorp.com',
+                phone: '+1 (555) 987-6543',
+                location: 'San Francisco, CA, USA',
+                department: 'Data Analytics',
+                joinDate: '2023-03-20',
+                accountNumber: 'ACC-2024-005678',
+                cardType: 'Executive Platinum',
+                securityLevel: 'Level 4 - Executive',
+                language: 'English (US)'
+              }}
+            />
+          </Box>
+        )} */}
 
         <Box sx={{ flexGrow: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <DataGridSection

@@ -58,14 +58,13 @@ function DatabasePerformanceMetrics({ selectedTable, darkMode }) {
     connectionPoolSize: ''
   }
 
-  return (
-    <Card 
+  return (    <Card 
       elevation={2} 
       sx={{ 
         borderRadius: 2,
         background: darkMode 
-          ? 'linear-gradient(135deg, rgba(255,193,7,0.1) 0%, rgba(255,152,0,0.1) 100%)'
-          : 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+          ? 'linear-gradient(135deg, rgba(156,39,176,0.15) 0%, rgba(123,31,162,0.15) 100%)'
+          : 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
         height: '100%'
       }}
     >

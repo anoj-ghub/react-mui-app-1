@@ -63,14 +63,13 @@ function SystemInformation({ selectedTable, darkMode }) {
     activeUsers: ''
   }
 
-  return (
-    <Card 
+  return (    <Card 
       elevation={2} 
       sx={{ 
         borderRadius: 2,
         background: darkMode 
-          ? 'linear-gradient(135deg, rgba(186,85,211,0.1) 0%, rgba(147,112,219,0.1) 100%)'
-          : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+          ? 'linear-gradient(135deg, rgba(63,81,181,0.15) 0%, rgba(25,118,210,0.15) 100%)'
+          : 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
         height: '100%'
       }}
     >

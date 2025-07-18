@@ -21,6 +21,7 @@ import { DataGrid, gridClasses } from '@mui/x-data-grid'
 import StorageIcon from '@mui/icons-material/Storage'
 import SearchIcon from '@mui/icons-material/Search'
 import ClearIcon from '@mui/icons-material/Clear'
+import ErrorBoundary from '../ErrorBoundary'
 
 /**
  * Reusable data table component with loading state and search functionality
@@ -91,6 +92,17 @@ const ReusableDataTable = ({
   containerSx = {}
 }) => {
 
+  // Add debugging
+  React.useEffect(() => {
+    console.log('ReusableDataTable props:', {
+      title,
+      dataLength: data?.length || 0,
+      columnsLength: columns?.length || 0,
+      loading,
+      searchText
+    })
+  }, [title, data, columns, loading, searchText])
+
   /**
    * Memoized filtered rows based on search text
    * Performs case-insensitive search across all column values
@@ -99,16 +111,20 @@ const ReusableDataTable = ({
   const filteredRows = React.useMemo(() => {
     if (!enableSearch || !searchText.trim()) return data
     
-    const searchTerms = searchText.toLowerCase().split(' ').filter(term => term.length > 0)
+    const searchLower = searchText.toLowerCase().trim()
     
     return data.filter(row => {
-      return searchTerms.every(term =>
-        Object.values(row).some(value => 
-          value != null && value.toString().toLowerCase().includes(term)
-        )
-      )
+      return Object.values(row).some(value => {
+        if (value === null || value === undefined) return false
+        return String(value).toLowerCase().includes(searchLower)
+      })
     })
   }, [data, searchText, enableSearch])
+
+  // Add debugging for filtered rows
+  React.useEffect(() => {
+    console.log('Filtered rows count:', filteredRows?.length || 0)
+  }, [filteredRows])
 
   /**
    * Handle search text change
@@ -309,33 +325,37 @@ const ReusableDataTable = ({
               <Typography variant="h6" color="text.secondary">
                 {emptyMessage}
               </Typography>
-            </Box>
-          ) : (
-            <DataGrid
-              rows={filteredRows}
-              columns={columns}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize: initialPageSize },
-                }
-              }}
-              pageSizeOptions={pageSizeOptions}
-              disableRowSelectionOnClick
-              showCellVerticalBorder
-              showColumnVerticalBorder
-              paginationMode="client"
-              disableColumnFilter
-              disableColumnMenu
-              slots={toolbarSlot ? { 
-                toolbar: () => toolbarSlot
-              } : {}}
-              sx={{ 
-                height: '100%',
-                width: '100%',
-                border: 'none'
-              }}
-              {...gridProps}
-            />
+            </Box>          ) : (            <ErrorBoundary>
+              <DataGrid
+                rows={filteredRows}
+                columns={columns}
+                initialState={{
+                  pagination: {
+                    paginationModel: { page: 0, pageSize: initialPageSize },
+                  }
+                }}
+                pageSizeOptions={pageSizeOptions}
+                disableRowSelectionOnClick
+                showCellVerticalBorder
+                showColumnVerticalBorder
+                paginationMode="client"
+                disableColumnFilter
+                disableColumnMenu
+                getRowId={(row) => row.id}
+                slots={toolbarSlot ? { 
+                  toolbar: () => toolbarSlot
+                } : {}}
+                slotProps={{
+                  toolbar: toolbarSlot ? {} : undefined
+                }}
+                sx={{ 
+                  height: '100%',
+                  width: '100%',
+                  border: 'none'
+                }}
+                {...gridProps}
+              />
+            </ErrorBoundary>
           )}
         </Box>
       </Paper>

@@ -5,6 +5,7 @@
  */
 
 import { Box, Typography, Divider, Chip } from '@mui/material'
+import { TimeZoneDisplay } from '../../components'
 
 /**
  * Helper function to get environment chip color based on environment type
@@ -39,8 +40,15 @@ const getEnvironmentColor = (env) => {
  * <DataBrowserHeader environment="Development" />
  * ```
  */
-function DataBrowserHeader({ environment }) {return (
-    <Box sx={{ mb: 1.5 }}> {/* Reduced margin bottom */}      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}> {/* Reduced margin */}
+function DataBrowserHeader({ environment, darkMode }) {
+  return (
+    <Box sx={{ mb: 1.5 }}> {/* Reduced margin bottom */}
+      {/* TimeZone Display Row */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 0.5 }}>
+        <TimeZoneDisplay darkMode={darkMode} />
+      </Box>
+      
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}> {/* Reduced margin */}
         <Box>
           <Typography 
             variant="h5" // Reduced from h4 to h5
@@ -89,8 +97,7 @@ function DataBrowserHeader({ environment }) {return (
               }
             }}
           />
-        </Box>
-      </Box>
+        </Box>      </Box>
       <Divider sx={{ mt: 0.5 }} /> {/* Reduced margin */}
     </Box>
   )

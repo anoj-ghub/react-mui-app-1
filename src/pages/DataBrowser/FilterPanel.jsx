@@ -7,6 +7,7 @@
 import { Grid } from '@mui/material'
 import DatabasePerformanceMetrics from '../../components/DatabaseMetrics'
 import SystemInformation from '../../components/SystemInfo'
+import StatusContainer from '../../components/StatusContainer'
 
 /**
  * Filter panel component that displays database performance metrics and system information
@@ -31,13 +32,11 @@ import SystemInformation from '../../components/SystemInfo'
 function FilterPanel({ selectedTable, darkMode }) {
   return (
     <Grid container spacing={1.5} sx={{ mt: 1.5, mb: 1.5 }}>
-      {/* Database Performance Panel */}
-      <Grid item xs={12}>
+      {/* Database Performance Panel - Reduced width to fit side by side */}
+      <Grid item xs={12} md={7}>
         <DatabasePerformanceMetrics selectedTable={selectedTable} darkMode={darkMode} />
-      </Grid>
-
-      {/* System Information Panel */}
-      <Grid item xs={12}>
+      </Grid>      {/* System Information Panel - Positioned next to database metrics */}
+      <Grid item xs={12} md={5}>
         <SystemInformation selectedTable={selectedTable} darkMode={darkMode} />
       </Grid>
     </Grid>

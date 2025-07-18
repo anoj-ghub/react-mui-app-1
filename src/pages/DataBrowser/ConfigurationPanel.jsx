@@ -84,9 +84,11 @@ function ConfigurationPanel({
   selectedDate,
   setSelectedDate
 }) {
-
   // Load table list from external database
   const { tableOptions, loading: tableListLoading, error: tableListError, refetch } = useTableList();
+
+  // Check if required fields are filled for form validation
+  const isFormValid = selectedTable && accountNumber && isAccountNumberValid;
 
   /** @constant {Object[]} Predefined date options with values and labels */
   const dateOptions = [
@@ -122,25 +124,27 @@ function ConfigurationPanel({
           <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.8rem' }}>
             Data Source Configuration
           </Typography>
-        </Box>
-        <Grid container spacing={1}>
-          <Grid item xs={12} md={3}>            {tableListError ? (
-              <Alert 
-                severity="warning" 
-                sx={{ fontSize: '0.75rem', py: 0.5 }}
-                action={
-                  <IconButton
-                    color="inherit"
-                    size="small"
-                    onClick={refetch}
-                    sx={{ fontSize: '0.7rem' }}
-                  >
-                    <RefreshIcon fontSize="small" />
-                  </IconButton>
-                }
-              >
-                Failed to load tables. Click refresh to retry.
-              </Alert>            ) : (              <Autocomplete
+        </Box>        <Grid container spacing={1}>
+          <Grid item xs={12} md={3}>
+            <Box sx={{ minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+              {tableListError ? (
+                <Alert 
+                  severity="warning" 
+                  sx={{ fontSize: '0.75rem', py: 0.5 }}
+                  action={
+                    <IconButton
+                      color="inherit"
+                      size="small"
+                      onClick={refetch}
+                      sx={{ fontSize: '0.7rem' }}
+                    >
+                      <RefreshIcon fontSize="small" />
+                    </IconButton>
+                  }
+                >
+                  Failed to load tables. Click refresh to retry.
+                </Alert>
+              ) : (<Autocomplete
                 fullWidth
                 size="small"
                 disabled={tableListLoading}
@@ -155,8 +159,11 @@ function ConfigurationPanel({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label={tableListLoading ? 'Loading tables...' : 'Select Table'}
+                    required
+                    label={tableListLoading ? 'Loading tables...' : 'Select Table *'}
                     placeholder="Search tables..."
+                    error={!selectedTable && selectedTable !== null}
+                    helperText={!selectedTable && selectedTable !== null ? 'Table selection is required' : ''}
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: tableListLoading ? (
@@ -202,8 +209,7 @@ function ConfigurationPanel({
                       <StorageIcon sx={{ mr: 0.5, fontSize: '0.7rem', color: 'text.secondary' }} />
                       {option.label}
                     </Box>
-                  </Box>
-                )}
+                  </Box>                )}
                 noOptionsText={tableListLoading ? "Loading..." : "No tables found"}
                 sx={{
                   '& .MuiAutocomplete-inputRoot': {
@@ -223,19 +229,24 @@ function ConfigurationPanel({
                   }
                 }}
               />
-            )}
-          </Grid>
-
-          <Grid item xs={12} md={9}>            <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'center' }}>
-                <TextField
+              )}
+            </Box>
+          </Grid>          <Grid item xs={12} md={9}>
+            <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'flex-start', justifyContent: 'space-between', minHeight: 72 }}>
+              <Box sx={{ display: 'flex', gap: 0.8, alignItems: 'flex-start' }}>
+                <Box sx={{ minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                  <TextField
                 size="small"
-                label="Account Number"
+                required
+                label="Account Number *"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 variant="outlined"
-                error={!isAccountNumberValid && accountNumber !== ''}
-                helperText={accountNumberError}
+                error={(!isAccountNumberValid && accountNumber !== '') || (!accountNumber)}
+                helperText={
+                  !accountNumber ? 'Account number is required' : 
+                  (!isAccountNumberValid && accountNumber !== '') ? accountNumberError : ''
+                }
                 inputProps={{ 
                   maxLength: 15,
                   inputMode: 'numeric',
@@ -270,8 +281,8 @@ function ConfigurationPanel({
                         borderColor: '#4caf50'
                       }
                     }),
-                    // Invalid state - red border
-                    ...(!isAccountNumberValid && accountNumber !== '' && {
+                    // Invalid state - red border (for validation errors or empty required field)
+                    ...((!isAccountNumberValid && accountNumber !== '') || (!accountNumber) && {
                       '& fieldset': {
                         borderColor: '#f44336',
                         borderWidth: '2px'
@@ -293,7 +304,7 @@ function ConfigurationPanel({
                         color: '#4caf50'
                       }
                     }),
-                    ...(!isAccountNumberValid && accountNumber !== '' && {
+                    ...((!isAccountNumberValid && accountNumber !== '') || (!accountNumber) && {
                       color: '#f44336',
                       '&.Mui-focused': {
                         color: '#f44336'
@@ -302,42 +313,62 @@ function ConfigurationPanel({
                   },
                   '& .MuiFormHelperText-root': {
                     fontSize: '0.65rem',
-                    marginTop: '2px',
-                    marginLeft: 0
+                    marginTop: '2px',                    marginLeft: 0
                   }
                 }}
                 placeholder="000000000000000"
               />
-              <Button 
+                </Box>
+                <Box sx={{ minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                  <Button
                 variant="contained" 
                 size="small"
                 onClick={handleSubmit}
+                disabled={!isFormValid}
                 startIcon={<SearchIcon sx={{ fontSize: '0.9rem' }} />}
                 sx={{ 
                   borderRadius: 2,
                   minWidth: 90,
                   height: 32,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  boxShadow: '0 3px 10px rgba(102,126,234,0.3)',
+                  background: isFormValid 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'linear-gradient(135deg, #ccc 0%, #999 100%)',
+                  boxShadow: isFormValid 
+                    ? '0 3px 10px rgba(102,126,234,0.3)'
+                    : '0 2px 5px rgba(0,0,0,0.1)',
                   textTransform: 'none',
                   fontWeight: 600,
                   fontSize: '0.75rem',
                   letterSpacing: '0.3px',
+                  cursor: isFormValid ? 'pointer' : 'not-allowed',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                    boxShadow: '0 4px 15px rgba(102,126,234,0.5)',
-                    transform: 'translateY(-0.5px)',
+                    background: isFormValid 
+                      ? 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)'
+                      : 'linear-gradient(135deg, #ccc 0%, #999 100%)',
+                    boxShadow: isFormValid 
+                      ? '0 4px 15px rgba(102,126,234,0.5)'
+                      : '0 2px 5px rgba(0,0,0,0.1)',
+                    transform: isFormValid ? 'translateY(-0.5px)' : 'none',
                   },
                   '&:active': {
-                    transform: 'translateY(0px)',
-                    boxShadow: '0 2px 8px rgba(102,126,234,0.3)',
+                    transform: isFormValid ? 'translateY(0px)' : 'none',
+                    boxShadow: isFormValid 
+                      ? '0 2px 8px rgba(102,126,234,0.3)'
+                      : '0 2px 5px rgba(0,0,0,0.1)',
+                  },
+                  '&.Mui-disabled': {
+                    background: 'linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%)',
+                    color: '#9e9e9e',
+                    boxShadow: 'none'
                   },
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
+                }}                title={!isFormValid ? 'Please fill in all required fields: Table and Account Number' : 'Submit form'}
               >
                 Submit
               </Button>
-              <Button 
+                </Box>
+                <Box sx={{ minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                  <Button
                 variant="outlined" 
                 size="small"
                 onClick={handleClear}
@@ -369,10 +400,12 @@ function ConfigurationPanel({
               >
                 Clear
               </Button>
+                </Box>
               </Box>
               
               {/* Date Filter - Moved to the right */}
-              <FormControl 
+              <Box sx={{ minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                <FormControl
                 size="small"
                 sx={{ 
                   width: 140,
@@ -392,14 +425,14 @@ function ConfigurationPanel({
                   label="Select Date"
                   onChange={(e) => setSelectedDate(e.target.value)}
                   sx={{ fontSize: '0.8rem' }}
-                >
-                  {dateOptions.map((option) => (
+                >                  {dateOptions.map((option) => (
                     <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.8rem' }}>
                       {option.label}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+              </Box>
             </Box>
           </Grid>
         </Grid>
