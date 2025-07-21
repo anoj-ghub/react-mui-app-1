@@ -35,7 +35,6 @@ function PipeDelimitedDataModal({
   fieldName, 
   darkMode = false 
 }) {
-  const [pageSize, setPageSize] = useState(25);
 
   /**
    * Detect the data type of a value
@@ -429,7 +428,8 @@ function PipeDelimitedDataModal({
             {/* DataGrid Section */}
             <Box sx={{ 
               flexGrow: 1, 
-              minHeight: 400,
+              height: '500px', // Fixed height to enable proper scrolling
+              maxHeight: '60vh', // Responsive max height
               border: '2px solid',
               borderColor: darkMode ? 'grey.700' : 'grey.300',
               borderRadius: 2,
@@ -439,19 +439,60 @@ function PipeDelimitedDataModal({
               <DataGrid
                 rows={parsedData.rows}
                 columns={parsedData.columns}
-                pageSize={pageSize}
-                onPageSizeChange={setPageSize}
-                rowsPerPageOptions={[10, 25, 50, 100]}
+                initialState={{
+                  pagination: {
+                    paginationModel: { pageSize: 25, page: 0 }
+                  }
+                }}
+                pageSizeOptions={[10, 25, 50, 100]}
                 disableSelectionOnClick
                 autoHeight={false}
                 density="compact"
                 rowHeight={32}
                 headerHeight={44}
+                scrollbarSize={12}
                 sx={{
                   border: 'none',
                   borderRadius: 0,
+                  height: '100%',
                   '& .MuiDataGrid-main': {
-                    height: '100%'
+                    height: '100%',
+                    overflow: 'auto'
+                  },
+                  '& .MuiDataGrid-virtualScroller': {
+                    height: '100% !important',
+                    overflow: 'auto !important',
+                    // Custom scrollbar styling
+                    '&::-webkit-scrollbar': {
+                      width: '12px',
+                      height: '12px'
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                      borderRadius: '6px'
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                      borderRadius: '6px',
+                      border: `2px solid ${darkMode ? '#424242' : '#f5f5f5'}`,
+                      '&:hover': {
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
+                      },
+                      '&:active': {
+                        backgroundColor: darkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'
+                      }
+                    },
+                    '&::-webkit-scrollbar-corner': {
+                      backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                    }
+                  },
+                  '& .MuiDataGrid-scrollbar': {
+                    '&--vertical': {
+                      width: '12px',
+                    },
+                    '&--horizontal': {
+                      height: '12px',
+                    }
                   },
                   '& .MuiDataGrid-cell': {
                     borderRight: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
@@ -493,23 +534,6 @@ function PipeDelimitedDataModal({
                       boxShadow: darkMode 
                         ? '0 2px 4px rgba(33,150,243,0.2)' 
                         : '0 2px 4px rgba(33,150,243,0.15)'
-                    }
-                  },
-                  '& .MuiDataGrid-virtualScroller': {
-                    '&::-webkit-scrollbar': {
-                      width: '8px',
-                      height: '8px'
-                    },
-                    '&::-webkit-scrollbar-track': {
-                      backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                      borderRadius: '4px'
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      backgroundColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                      borderRadius: '4px',
-                      '&:hover': {
-                        backgroundColor: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
-                      }
                     }
                   },
                   '& .MuiDataGrid-footerContainer': {

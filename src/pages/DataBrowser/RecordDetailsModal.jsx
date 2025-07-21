@@ -49,8 +49,9 @@ import DataObjectIcon from '@mui/icons-material/DataObject'
 import FilterAltIcon from '@mui/icons-material/FilterAlt'
 import InfoIcon from '@mui/icons-material/Info'
 import LaunchIcon from '@mui/icons-material/Launch'
+import ViewColumnIcon from '@mui/icons-material/ViewColumn'
 import { formatAmount, formatAmountByType, DEFAULT_AMOUNT_FIELDS, isValidNOD } from '../../utils/amountFormatter'
-import { PipeDelimitedDataModal } from '../../components'
+import { PipeDelimitedDataModal, PipeDelimitedVerticalModal } from '../../components'
 import { isPipeDelimitedData, getPipeDelimitedPreview, countPipeDelimitedItems } from '../../utils/pipeDelimitedDetector'
 
 /**
@@ -161,6 +162,13 @@ function RecordDetailsModal({
 
   /** @type {[Object, Function]} Pipe-delimited modal state */
   const [pipeDelimitedModal, setPipeDelimitedModal] = useState({
+    open: false,
+    data: '',
+    fieldName: ''
+  })
+
+  /** @type {[Object, Function]} Pipe-delimited vertical modal state */
+  const [pipeDelimitedVerticalModal, setPipeDelimitedVerticalModal] = useState({
     open: false,
     data: '',
     fieldName: ''
@@ -295,6 +303,30 @@ function RecordDetailsModal({
    */
   const handleClosePipeDelimitedModal = () => {
     setPipeDelimitedModal({
+      open: false,
+      data: '',
+      fieldName: ''
+    })
+  }
+
+  /**
+   * Opens the pipe-delimited vertical data modal
+   * @param {string} value - The pipe-delimited data value
+   * @param {string} fieldName - The name of the field
+   */
+  const handleOpenPipeDelimitedVerticalModal = (value, fieldName) => {
+    setPipeDelimitedVerticalModal({
+      open: true,
+      data: value,
+      fieldName: fieldName
+    })
+  }
+
+  /**
+   * Closes the pipe-delimited vertical data modal
+   */
+  const handleClosePipeDelimitedVerticalModal = () => {
+    setPipeDelimitedVerticalModal({
       open: false,
       data: '',
       fieldName: ''
@@ -496,6 +528,7 @@ function RecordDetailsModal({
                 sx={{ 
                   p: 0.25,
                   color: 'primary.main',
+                  mr: 0.5,
                   '&:hover': {
                     backgroundColor: 'primary.main',
                     color: 'white'
@@ -504,6 +537,21 @@ function RecordDetailsModal({
                 title="View pipe-delimited data in table format"
               >
                 <LaunchIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => handleOpenPipeDelimitedVerticalModal(value, key)}
+                sx={{ 
+                  p: 0.25,
+                  color: 'secondary.main',
+                  '&:hover': {
+                    backgroundColor: 'secondary.main',
+                    color: 'white'
+                  }
+                }}
+                title="View pipe-delimited data in vertical format"
+              >
+                <ViewColumnIcon sx={{ fontSize: 14 }} />
               </IconButton>
             </Box>
             <Typography 
@@ -1349,6 +1397,14 @@ function RecordDetailsModal({
           onClose={handleClosePipeDelimitedModal}
           data={pipeDelimitedModal.data}
           fieldName={pipeDelimitedModal.fieldName}
+          darkMode={darkMode}
+        />
+        {/* Pipe-Delimited Vertical Data Modal */}
+        <PipeDelimitedVerticalModal
+          open={pipeDelimitedVerticalModal.open}
+          onClose={handleClosePipeDelimitedVerticalModal}
+          data={pipeDelimitedVerticalModal.data}
+          fieldName={pipeDelimitedVerticalModal.fieldName}
           darkMode={darkMode}
         />
       </Dialog>
