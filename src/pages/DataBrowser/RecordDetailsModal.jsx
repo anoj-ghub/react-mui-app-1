@@ -36,7 +36,11 @@ import {
   Paper,
   Card,
   CardContent,
-  Popover
+  Popover,
+  LinearProgress,
+  Badge,
+  Tooltip,
+  Avatar
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import ViewListIcon from '@mui/icons-material/ViewList'
@@ -50,9 +54,21 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt'
 import InfoIcon from '@mui/icons-material/Info'
 import LaunchIcon from '@mui/icons-material/Launch'
 import ViewColumnIcon from '@mui/icons-material/ViewColumn'
+import StorageIcon from '@mui/icons-material/Storage'
+import ApiIcon from '@mui/icons-material/Api'
+import FolderIcon from '@mui/icons-material/Folder'
+import CloudSyncIcon from '@mui/icons-material/CloudSync'
+import TableChartIcon from '@mui/icons-material/TableChart'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import CancelIcon from '@mui/icons-material/Cancel'
+import TransformIcon from '@mui/icons-material/Transform'
+import SecurityIcon from '@mui/icons-material/Security'
+import SpeedIcon from '@mui/icons-material/Speed'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import { formatAmount, formatAmountByType, DEFAULT_AMOUNT_FIELDS, isValidNOD } from '../../utils/amountFormatter'
 import { PipeDelimitedDataModal, PipeDelimitedVerticalModal } from '../../components'
 import { isPipeDelimitedData, getPipeDelimitedPreview, countPipeDelimitedItems } from '../../utils/pipeDelimitedDetector'
+import FieldInfoPopover from '../../components/FieldInfoPopover'
 
 /**
  * Record details modal component with advanced features and NOD (Number of Decimals) formatting
@@ -342,105 +358,506 @@ function RecordDetailsModal({
   const getFieldDetails = (fieldKey) => {
     const fieldMappings = {
       id: {
-        displayName: 'ID',
-        dataType: 'INTEGER',
-        source: 'Primary Key',
-        description: 'Unique identifier for the record',
-        nullable: false,
-        maxLength: null,
-        defaultValue: 'AUTO_INCREMENT',
-        constraints: ['PRIMARY KEY', 'NOT NULL'],
-        indexed: true
+        displayName: 'Customer ID',
+        description: 'Customer Account number',
+        origin: {
+          batch: {
+            updated: true,
+            feedFileDetails: {
+              name: 'customer.txt',
+              recType: '10',
+              fieldname: 'Customer-number',
+              datatype: 'char',
+              length: 12,
+              startPos: 25,
+              endPos: 37
+            }
+          },
+          realTime: {
+            updated: true,
+            events: [
+              {
+                eventName: 'customerUpdate',
+                datatype: 'string',
+                length: 12,
+                startPos: 36,
+                endPos: 48
+              },
+              {
+                eventName: 'orderUpdate',
+                datatype: 'string',
+                length: 12,
+                startPos: 122,
+                endPos: 134
+              }
+            ]
+          }
+        },
+        pgTableInfo: {
+          tableInfo: {
+            name: 'customer_details',
+            colName: 'custNum',
+            colNum: 1,
+            datatype: 'string',
+            length: 12,
+            scale: 0,
+            nulls: false,
+            default: false,
+            defaultValue: '',
+            isPrimaryKey: true,
+            ixName: 'custidx01',
+            ixColSeq: 4
+          }
+        },
+        apiInfo: [
+          {
+            spName: 'getCustomerInfo',
+            resultsetNum: 1,
+            rsName: 'customer-details',
+            tagName: 'customerNumber',
+            position: 5,
+            formatting: {
+              applied: true,
+              formatNumeric: true,
+              other: false
+            },
+            transformationLogic: {
+              type: 'conditional checking',
+              expression: 'if cust-num > 9000 then null'
+            }
+          }
+        ],
+        downstreamFeedDtls: {
+          controlFile: 'customer-control.txt',
+          datafile: 'customer-data.txt',
+          fieldname: 'customer-num',
+          datatype: 'string',
+          length: 12,
+          position: 5
+        }
       },
       name: {
-        displayName: 'Name',
-        dataType: 'VARCHAR',
-        source: 'User Input',
-        description: 'Full name of the entity',
-        nullable: false,
-        maxLength: 255,
-        defaultValue: null,
-        constraints: ['NOT NULL'],
-        indexed: false
+        displayName: 'Customer Name',
+        description: 'Full legal name of the customer entity',
+        origin: {
+          batch: {
+            updated: true,
+            feedFileDetails: {
+              name: 'customer.txt',
+              recType: '10',
+              fieldname: 'CustomerName',
+              datatype: 'varchar',
+              length: 255,
+              startPos: 38,
+              endPos: 293
+            }
+          },
+          realTime: {
+            updated: true,
+            events: [
+              {
+                eventName: 'customerNameUpdate',
+                datatype: 'string',
+                length: 255,
+                startPos: 49,
+                endPos: 304
+              }
+            ]
+          }
+        },
+        pgTableInfo: {
+          tableInfo: {
+            name: 'customer_details',
+            colName: 'customerName',
+            colNum: 2,
+            datatype: 'varchar',
+            length: 255,
+            scale: 0,
+            nulls: false,
+            default: false,
+            defaultValue: '',
+            isPrimaryKey: false,
+            ixName: null,
+            ixColSeq: null
+          }
+        },
+        apiInfo: [
+          {
+            spName: 'getCustomerInfo',
+            resultsetNum: 1,
+            rsName: 'customer-details',
+            tagName: 'customerName',
+            position: 2,
+            formatting: {
+              applied: true,
+              formatNumeric: false,
+              other: true
+            },
+            transformationLogic: {
+              type: 'string manipulation',
+              expression: 'trim and upper case conversion'
+            }
+          }
+        ],
+        downstreamFeedDtls: {
+          controlFile: 'customer-control.txt',
+          datafile: 'customer-data.txt',
+          fieldname: 'customer-name',
+          datatype: 'string',
+          length: 255,
+          position: 2
+        }
       },
       account: {
-        displayName: 'Account',
-        dataType: 'VARCHAR',
-        source: 'Generated',
-        description: 'Account number with format ACC###',
-        nullable: false,
-        maxLength: 10,
-        defaultValue: null,
-        constraints: ['UNIQUE', 'NOT NULL'],
-        indexed: true
-      },
-      status: {
-        displayName: 'Status',
-        dataType: 'ENUM',
-        source: 'Workflow',
-        description: 'Current status of the record',
-        nullable: false,
-        maxLength: null,
-        defaultValue: 'ACTIVE',
-        constraints: ['CHECK (status IN (\'ACTIVE\', \'INACTIVE\', \'PENDING\'))'],
-        indexed: true
+        displayName: 'Account Number',
+        description: 'System-generated account identifier with ACC prefix',
+        origin: {
+          batch: {
+            updated: true,
+            feedFileDetails: {
+              name: 'account.txt',
+              recType: '20',
+              fieldname: 'AccountNum',
+              datatype: 'char',
+              length: 10,
+              startPos: 1,
+              endPos: 11
+            }
+          },
+          realTime: {
+            updated: true,
+            events: [
+              {
+                eventName: 'accountCreated',
+                datatype: 'string',
+                length: 10,
+                startPos: 1,
+                endPos: 11
+              },
+              {
+                eventName: 'accountUpdated',
+                datatype: 'string',
+                length: 10,
+                startPos: 12,
+                endPos: 22
+              },
+              {
+                eventName: 'accountClosed',
+                datatype: 'string',
+                length: 10,
+                startPos: 23,
+                endPos: 33
+              }
+            ]
+          }
+        },
+        pgTableInfo: {
+          tableInfo: {
+            name: 'account_master',
+            colName: 'accountNumber',
+            colNum: 1,
+            datatype: 'varchar',
+            length: 10,
+            scale: 0,
+            nulls: false,
+            default: false,
+            defaultValue: '',
+            isPrimaryKey: false,
+            ixName: 'accidx01',
+            ixColSeq: 1
+          }
+        },
+        apiInfo: [
+          {
+            spName: 'getAccountDetails',
+            resultsetNum: 1,
+            rsName: 'account-info',
+            tagName: 'accountNumber',
+            position: 1,
+            formatting: {
+              applied: false,
+              formatNumeric: false,
+              other: false
+            },
+            transformationLogic: {
+              type: 'format validation',
+              expression: 'validate ACC### pattern'
+            }
+          }
+        ],
+        downstreamFeedDtls: {
+          controlFile: 'account-control.txt',
+          datafile: 'account-data.txt',
+          fieldname: 'account-number',
+          datatype: 'string',
+          length: 10,
+          position: 1
+        }
       },
       amount: {
-        displayName: 'Amount',
-        dataType: 'DECIMAL(10,2)',
-        source: 'Transaction System',
-        description: 'Monetary amount in USD',
-        nullable: true,
-        maxLength: null,
-        defaultValue: '0.00',
-        constraints: ['CHECK (amount >= 0)'],
-        indexed: false
+        displayName: 'Transaction Amount',
+        description: 'Monetary amount in USD with precision handling',
+        origin: {
+          batch: {
+            updated: true,
+            feedFileDetails: {
+              name: 'transaction.txt',
+              recType: '30',
+              fieldname: 'Amount',
+              datatype: 'decimal',
+              length: 15,
+              startPos: 50,
+              endPos: 65
+            }
+          },
+          realTime: {
+            updated: true,
+            events: [
+              {
+                eventName: 'transactionProcessed',
+                datatype: 'decimal',
+                length: 15,
+                startPos: 20,
+                endPos: 35
+              }
+            ]
+          }
+        },
+        pgTableInfo: {
+          tableInfo: {
+            name: 'transaction_details',
+            colName: 'transactionAmount',
+            colNum: 5,
+            datatype: 'decimal',
+            length: 15,
+            scale: 2,
+            nulls: true,
+            default: true,
+            defaultValue: '0.00',
+            isPrimaryKey: false,
+            ixName: null,
+            ixColSeq: null
+          }
+        },
+        apiInfo: [
+          {
+            spName: 'getTransactionInfo',
+            resultsetNum: 1,
+            rsName: 'transaction-details',
+            tagName: 'amount',
+            position: 3,
+            formatting: {
+              applied: true,
+              formatNumeric: true,
+              other: false
+            },
+            transformationLogic: {
+              type: 'numeric validation',
+              expression: 'validate positive amounts and round to 2 decimals'
+            }
+          }
+        ],
+        downstreamFeedDtls: {
+          controlFile: 'transaction-control.txt',
+          datafile: 'transaction-data.txt',
+          fieldname: 'transaction-amount',
+          datatype: 'decimal',
+          length: 15,
+          position: 3
+        }
       },
       date: {
-        displayName: 'Date',
-        dataType: 'DATE',
-        source: 'System Generated',
-        description: 'Record creation or transaction date',
-        nullable: false,
-        maxLength: null,
-        defaultValue: 'CURRENT_DATE',
-        constraints: ['NOT NULL'],
-        indexed: true
+        displayName: 'Transaction Date',
+        description: 'Date when the transaction was processed',
+        origin: {
+          batch: {
+            updated: true,
+            feedFileDetails: {
+              name: 'transaction.txt',
+              recType: '30',
+              fieldname: 'TxnDate',
+              datatype: 'date',
+              length: 10,
+              startPos: 66,
+              endPos: 76
+            }
+          },
+          realTime: {
+            updated: true,
+            events: [
+              {
+                eventName: 'transactionProcessed',
+                datatype: 'timestamp',
+                length: 19,
+                startPos: 36,
+                endPos: 55
+              }
+            ]
+          }
+        },
+        pgTableInfo: {
+          tableInfo: {
+            name: 'transaction_details',
+            colName: 'transactionDate',
+            colNum: 3,
+            datatype: 'timestamp',
+            length: 19,
+            scale: 0,
+            nulls: false,
+            default: true,
+            defaultValue: 'CURRENT_TIMESTAMP',
+            isPrimaryKey: false,
+            ixName: 'txn_date_idx',
+            ixColSeq: 1
+          }
+        },
+        apiInfo: [
+          {
+            spName: 'getTransactionInfo',
+            resultsetNum: 1,
+            rsName: 'transaction-details',
+            tagName: 'transactionDate',
+            position: 4,
+            formatting: {
+              applied: true,
+              formatNumeric: false,
+              other: true
+            },
+            transformationLogic: {
+              type: 'date formatting',
+              expression: 'format as ISO 8601 with timezone'
+            }
+          }
+        ],
+        downstreamFeedDtls: {
+          controlFile: 'transaction-control.txt',
+          datafile: 'transaction-data.txt',
+          fieldname: 'transaction-date',
+          datatype: 'date',
+          length: 10,
+          position: 4
+        }
       },
-      category: {
-        displayName: 'Category',
-        dataType: 'VARCHAR',
-        source: 'Classification System',
-        description: 'Business category classification',
-        nullable: true,
-        maxLength: 100,
-        defaultValue: null,
-        constraints: [],
-        indexed: false
-      },
-      department: {
-        displayName: 'Department',
-        dataType: 'VARCHAR',
-        source: 'HR System',
-        description: 'Organizational department',
-        nullable: true,
-        maxLength: 100,
-        defaultValue: null,
-        constraints: [],
-        indexed: false
+      status: {
+        displayName: 'Record Status',
+        description: 'Current processing status of the record',
+        origin: {
+          batch: {
+            updated: true,
+            feedFileDetails: {
+              name: 'status.txt',
+              recType: '40',
+              fieldname: 'Status',
+              datatype: 'char',
+              length: 1,
+              startPos: 1,
+              endPos: 2
+            }
+          },
+          realTime: {
+            updated: true,
+            events: [
+              {
+                eventName: 'statusUpdate',
+                datatype: 'string',
+                length: 10,
+                startPos: 56,
+                endPos: 66
+              }
+            ]
+          }
+        },
+        pgTableInfo: {
+          tableInfo: {
+            name: 'record_status',
+            colName: 'statusCode',
+            colNum: 2,
+            datatype: 'varchar',
+            length: 10,
+            scale: 0,
+            nulls: false,
+            default: true,
+            defaultValue: 'PENDING',
+            isPrimaryKey: false,
+            ixName: 'status_idx',
+            ixColSeq: 1
+          }
+        },
+        apiInfo: [
+          {
+            spName: 'getRecordStatus',
+            resultsetNum: 1,
+            rsName: 'status-info',
+            tagName: 'status',
+            position: 1,
+            formatting: {
+              applied: true,
+              formatNumeric: false,
+              other: true
+            },
+            transformationLogic: {
+              type: 'enum validation',
+              expression: 'validate against allowed status values'
+            }
+          }
+        ],
+        downstreamFeedDtls: {
+          controlFile: 'status-control.txt',
+          datafile: 'status-data.txt',
+          fieldname: 'record-status',
+          datatype: 'string',
+          length: 10,
+          position: 6
+        }
       }
     }
     
     return fieldMappings[fieldKey] || {
       displayName: fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1),
-      dataType: 'VARCHAR',
-      source: 'Unknown',
-      description: 'No detailed information available for this field',
-      nullable: true,
-      maxLength: 255,
-      defaultValue: null,
-      constraints: [],
-      indexed: false
+      description: 'Field information not available in current schema mapping',
+      origin: {
+        batch: {
+          updated: false,
+          feedFileDetails: {
+            name: 'unknown.txt',
+            recType: 'N/A',
+            fieldname: fieldKey,
+            datatype: 'unknown',
+            length: null,
+            startPos: null,
+            endPos: null
+          }
+        },
+        realTime: {
+          updated: false,
+          events: []
+        }
+      },
+      pgTableInfo: {
+        tableInfo: {
+          name: 'unknown_table',
+          colName: fieldKey,
+          colNum: null,
+          datatype: 'varchar',
+          length: 255,
+          scale: 0,
+          nulls: true,
+          default: false,
+          defaultValue: '',
+          isPrimaryKey: false,
+          ixName: null,
+          ixColSeq: null
+        }
+      },
+      apiInfo: [],
+      downstreamFeedDtls: {
+        controlFile: 'unknown-control.txt',
+        datafile: 'unknown-data.txt',
+        fieldname: fieldKey,
+        datatype: 'string',
+        length: null,
+        position: null
+      }
     }
   }
 
@@ -1352,44 +1769,13 @@ function RecordDetailsModal({
           )}        </DialogActions>
 
         {/* Field Info Popover */}
-        <Popover
+        <FieldInfoPopover
           open={Boolean(fieldInfoAnchor)}
           anchorEl={fieldInfoAnchor}
           onClose={handleCloseFieldInfo}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'left',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-        >
-          {selectedFieldInfo && (
-            <Box sx={{ p: 2, maxWidth: 300 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                {selectedFieldInfo.displayName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {selectedFieldInfo.description}
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                <Chip label={selectedFieldInfo.dataType} size="small" color="primary" sx={{ mr: 0.5 }} />
-                <Chip label={selectedFieldInfo.source} size="small" color="secondary" sx={{ mr: 0.5 }} />
-                {selectedFieldInfo.nullable && (
-                  <Chip label="Nullable" size="small" color="default" />
-                )}
-              </Box>
-              {selectedFieldInfo.constraints && selectedFieldInfo.constraints.length > 0 && (
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Constraints: {selectedFieldInfo.constraints.join(', ')}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          )}
-        </Popover>
+          selectedFieldInfo={selectedFieldInfo}
+          darkMode={darkMode}
+        />
 
         {/* Pipe-Delimited Data Modal */}
         <PipeDelimitedDataModal

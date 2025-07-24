@@ -12,3 +12,4 @@ export { default as PipeDelimitedDataModal, PipeDelimitedVerticalModal } from '.
 export { default as ReusableDataTable } from './ReusableDataTable'
 export { default as SystemInformation } from './SystemInfo'
 export { default as TimeZoneDisplay } from './TimeZoneDisplay'
+export { default as FieldInfoPopover } from './FieldInfoPopover';
