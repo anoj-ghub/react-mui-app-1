@@ -92,16 +92,7 @@ const ReusableDataTable = ({
   containerSx = {}
 }) => {
 
-  // Add debugging
-  React.useEffect(() => {
-    console.log('ReusableDataTable props:', {
-      title,
-      dataLength: data?.length || 0,
-      columnsLength: columns?.length || 0,
-      loading,
-      searchText
-    })
-  }, [title, data, columns, loading, searchText])
+
 
   /**
    * Memoized filtered rows based on search text
@@ -121,10 +112,7 @@ const ReusableDataTable = ({
     })
   }, [data, searchText, enableSearch])
 
-  // Add debugging for filtered rows
-  React.useEffect(() => {
-    console.log('Filtered rows count:', filteredRows?.length || 0)
-  }, [filteredRows])
+
 
   /**
    * Handle search text change
@@ -149,7 +137,7 @@ const ReusableDataTable = ({
       sx={{ 
         borderRadius: 2,
         background: darkMode 
-          ? 'linear-gradient(135deg, rgba(240,147,251,0.2) 0%, rgba(245,87,108,0.2) 100%)'
+          ? 'linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)'
           : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
         p: 0.25,
         height: '100%',
@@ -199,7 +187,8 @@ const ReusableDataTable = ({
         sx={{ 
           p: 1.5,
           borderRadius: 1.5,
-          background: 'background.paper',
+          background: darkMode ? '#1e1e1e' : '#ffffff',
+          color: darkMode ? '#ffffff' : '#000000',
           display: 'flex',
           flexDirection: 'column',
           height: '100%'
@@ -260,12 +249,29 @@ const ReusableDataTable = ({
                 width: 380,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 1,
-                  backgroundColor: 'background.paper',
+                  backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
+                  color: darkMode ? '#ffffff' : '#000000',
                   fontSize: '0.8rem',
-                  height: 36
+                  height: 36,
+                  '& fieldset': {
+                    borderColor: darkMode ? 'rgba(255,255,255,0.23)' : 'rgba(0,0,0,0.23)'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: darkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: darkMode ? '#90caf9' : '#1976d2'
+                  }
                 },
                 '& .MuiInputLabel-root': {
-                  fontSize: '0.8rem'
+                  fontSize: '0.8rem',
+                  color: darkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                  '&.Mui-focused': {
+                    color: darkMode ? '#90caf9' : '#1976d2'
+                  }
+                },
+                '& input': {
+                  color: darkMode ? '#ffffff' : '#000000'
                 }
               }}
               placeholder={`${searchPlaceholder} (max ${searchMaxLength} chars)...`}
@@ -276,37 +282,147 @@ const ReusableDataTable = ({
         {/* Data Grid Container */}
         <Box sx={{ 
           flexGrow: 1,
-          border: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : '#e0e0e0'}`,
+          border: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : '#e0e0e0'}`,
           borderRadius: 1,
           overflow: 'hidden',
           height: height,
+          backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
           [`& .${gridClasses.root}`]: {
             border: 'none',
-            fontSize: '0.75rem'
+            fontSize: '0.75rem',
+            backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff',
+            color: darkMode ? '#ffffff' : '#000000',
+            '& .MuiDataGrid-main': {
+              backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff'
+            },
+            '& .MuiDataGrid-overlayWrapper': {
+              backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff'
+            },
+            '& .MuiDataGrid-virtualScroller': {
+              backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff'
+            },
+            '& .MuiDataGrid-virtualScrollerContent': {
+              backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff'
+            },
+            '& .MuiDataGrid-virtualScrollerRenderZone': {
+              backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff'
+            },
+            '& .MuiDataGrid-columnHeader:focus': {
+              outline: 'none !important',
+              backgroundColor: darkMode ? '#2d2d2d !important' : '#f5f5f5'
+            },
+            '& .MuiDataGrid-columnHeader:focus-within': {
+              outline: 'none !important',
+              backgroundColor: darkMode ? '#2d2d2d !important' : '#f5f5f5'
+            },
+            '& .MuiDataGrid-cell:focus': {
+              outline: 'none !important'
+            },
+            '& .MuiDataGrid-cell:focus-within': {
+              outline: 'none !important'
+            }
           },
           [`& .${gridClasses.columnHeaders}`]: {
-            backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : '#f5f5f5',
+            backgroundColor: darkMode ? '#2d2d2d !important' : '#f5f5f5',
             fontSize: '0.75rem',
-            borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : '#e0e0e0'}`,
-            minHeight: '40px'
+            borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : '#e0e0e0'}`,
+            minHeight: '40px',
+            color: darkMode ? '#ffffff' : '#000000',
+            '& .MuiDataGrid-columnHeader': {
+              backgroundColor: darkMode ? '#2d2d2d !important' : '#f5f5f5',
+              color: darkMode ? '#ffffff !important' : '#000000',
+              border: 'none !important',
+              outline: 'none !important',
+              '&:focus': {
+                outline: 'none !important',
+                border: 'none !important'
+              },
+              '&:focus-within': {
+                outline: 'none !important',
+                border: 'none !important'
+              }
+            },
+            '& .MuiDataGrid-columnHeaderTitle': {
+              color: darkMode ? '#ffffff !important' : '#000000',
+              fontWeight: 600
+            },
+            '& .MuiDataGrid-iconButtonContainer': {
+              color: darkMode ? '#ffffff' : '#000000'
+            },
+            '& .MuiDataGrid-sortIcon': {
+              color: darkMode ? '#ffffff' : '#000000'
+            },
+            '& .MuiDataGrid-columnSeparator': {
+              color: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+            }
           },
           [`& .${gridClasses.columnHeaderTitle}`]: {
             fontWeight: 600,
-            fontSize: '0.75rem'
+            fontSize: '0.75rem',
+            color: darkMode ? '#ffffff !important' : '#000000 !important'
           },
           [`& .${gridClasses.row}`]: {
+            backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff !important',
+            color: darkMode ? '#ffffff' : '#000000',
+            borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.04)' : '#f0f0f0'}`,
+            transition: 'all 0.2s ease-in-out',
+            '&.odd-row': {
+              backgroundColor: darkMode ? '#242424 !important' : '#f9f9f9 !important',
+              boxShadow: darkMode 
+                ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)'
+                : '0 1px 3px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.8)',
+            },
+            '&.even-row': {
+              backgroundColor: darkMode ? '#1a1a1a !important' : '#ffffff !important',
+              boxShadow: darkMode 
+                ? '0 2px 6px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(255,255,255,0.03)'
+                : '0 2px 6px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(0,0,0,0.03)',
+            },
             '&:hover': {
-              backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : '#f8f9fa'
+              backgroundColor: darkMode ? '#2d2d2d' : '#f8f9fa',
+              boxShadow: darkMode 
+                ? '0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)'
+                : '0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)',
+              transform: 'translateY(-1px)',
+            },
+            '&.Mui-selected': {
+              backgroundColor: darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.1)',
+              boxShadow: darkMode 
+                ? '0 3px 8px rgba(33, 150, 243, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                : '0 3px 8px rgba(33, 150, 243, 0.2), inset 0 1px 0 rgba(255,255,255,0.9)',
+              '&:hover': {
+                backgroundColor: darkMode ? 'rgba(33, 150, 243, 0.4)' : 'rgba(33, 150, 243, 0.15)',
+                boxShadow: darkMode 
+                  ? '0 5px 15px rgba(33, 150, 243, 0.5), inset 0 1px 0 rgba(255,255,255,0.3)'
+                  : '0 5px 15px rgba(33, 150, 243, 0.3), inset 0 1px 0 rgba(255,255,255,0.9)',
+              }
             }
           },
           [`& .${gridClasses.cell}`]: {
-            borderRight: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#e0e0e0'}`,
+            borderRight: `1px solid ${darkMode ? 'rgba(255,255,255,0.04)' : '#f0f0f0'}`,
             padding: '4px 8px',
-            fontSize: '0.75rem'
+            fontSize: '0.75rem',
+            color: darkMode ? '#ffffff' : '#000000'
           },
           [`& .${gridClasses.footerContainer}`]: {
-            borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : '#e0e0e0'}`,
-            backgroundColor: darkMode ? 'rgba(255,255,255,0.02)' : '#fafafa'
+            borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : '#e0e0e0'}`,
+            backgroundColor: darkMode ? '#2d2d2d' : '#fafafa',
+            color: darkMode ? '#ffffff' : '#000000',
+            '& .MuiTablePagination-root': {
+              color: darkMode ? '#ffffff' : '#000000'
+            },
+            '& .MuiTablePagination-selectLabel': {
+              color: darkMode ? '#ffffff' : '#000000'
+            },
+            '& .MuiTablePagination-displayedRows': {
+              color: darkMode ? '#ffffff' : '#000000'
+            },
+            '& .MuiSelect-select': {
+              color: darkMode ? '#ffffff' : '#000000'
+            },
+            '& .MuiIconButton-root': {
+              color: darkMode ? '#ffffff' : '#000000'
+            }
           }
         }}>
           {/* Show empty state or DataGrid */}
@@ -318,11 +434,21 @@ const ReusableDataTable = ({
                 justifyContent: 'center', 
                 height: '100%',
                 flexDirection: 'column',
-                gap: 2
+                gap: 2,
+                backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
+                color: darkMode ? '#ffffff' : '#000000'
               }}
             >
-              <StorageIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
-              <Typography variant="h6" color="text.secondary">
+              <StorageIcon sx={{ 
+                fontSize: 48, 
+                color: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' 
+              }} />
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: darkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' 
+                }}
+              >
                 {emptyMessage}
               </Typography>
             </Box>          ) : (            <ErrorBoundary>
@@ -342,6 +468,9 @@ const ReusableDataTable = ({
                 disableColumnFilter
                 disableColumnMenu
                 getRowId={(row) => row.id}
+                getRowClassName={(params) => 
+                  params.indexRelativeToCurrentPage % 2 === 0 ? 'even-row' : 'odd-row'
+                }
                 slots={toolbarSlot ? { 
                   toolbar: () => toolbarSlot
                 } : {}}
@@ -351,7 +480,31 @@ const ReusableDataTable = ({
                 sx={{ 
                   height: '100%',
                   width: '100%',
-                  border: 'none'
+                  border: 'none',
+                  backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff',
+                  '& .MuiDataGrid-columnHeader': {
+                    outline: 'none !important',
+                    '&:focus': {
+                      outline: 'none !important'
+                    }
+                  },
+                  '& .MuiDataGrid-cell': {
+                    outline: 'none !important',
+                    '&:focus': {
+                      outline: 'none !important'
+                    }
+                  },
+                  '& .MuiDataGrid-row': {
+                    '&:focus': {
+                      outline: 'none !important'
+                    }
+                  },
+                  '& .MuiDataGrid-viewport': {
+                    backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff'
+                  },
+                  '& .MuiDataGrid-window': {
+                    backgroundColor: darkMode ? '#1e1e1e !important' : '#ffffff'
+                  }
                 }}
                 {...gridProps}
               />

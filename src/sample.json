@@ -1,0 +1,153 @@
+[
+  {
+    "fieldName": "field1",
+    "description": "Customer Account number",
+    "origin": {
+      "batch": {
+        "updated": true,
+        "feedFileDetails": {
+          "name": "customer.txt",
+          "recType": "10",
+          "fieldname": "Customer-number",
+          "datatype": "char",
+          "length": 12,
+          "startPos": 25,
+          "endPos": 37
+        }
+      },
+      "realTime": {
+        "updated": true,
+        "events": [
+          {
+            "eventName": "customerUpdate",
+            "datatype": "string",
+            "length": 12,
+            "startPos": 36,
+            "endPos": 48
+          },
+          {
+            "eventName": "orderUpdate",
+            "datatype": "string",
+            "length": 12,
+            "startPos": 122,
+            "endPos": 134
+          }
+        ]
+      }
+    },
+    "pgTableInfo": {
+      "tableInfo": {
+        "name": "customer_details",
+        "colName": "custNum",
+        "colNum": 1,
+        "datatype": "string",
+        "length": 12,
+        "scale": 0,
+        "nulls": false,
+        "default": false,
+        "defaultValue": "",
+        "isPrimaryKey": true,
+        "ixName": "custidx01",
+        "ixColSeq": 4
+      }
+    },
+    "apiInfo": [
+      {
+        "spName": "getCustomerInfo",
+        "resultsetNum": 1,
+        "rsName": "customer-details",
+        "tagName": "customerNumber",
+        "position": 5,
+        "formatting": {
+          "applied": true,
+          "formatNumeric": true,
+          "other": false
+        },
+        "transformationLogic": {
+          "type": "conditional checking",
+          "expression": "if cust-num > 9000 then null"
+        }
+      }
+    ],
+    "downstreamFeedDtls": {
+      "controlFile": "customer-control.txt",
+      "datafile": "customer-data.txt",
+      "fieldname": "customer-num",
+      "datatype": "string",
+      "length": 12,
+      "position": 5
+    }
+  },
+  {
+    "fieldName": "field2",
+    "description": "Customer Name",
+    "origin": {
+      "batch": {
+        "updated": true,
+        "feedFileDetails": {
+          "name": "customer.txt",
+          "recType": "10",
+          "fieldname": "Customer-name",
+          "datatype": "varchar",
+          "length": 255,
+          "startPos": 38,
+          "endPos": 293
+        }
+      },
+      "realTime": {
+        "updated": true,
+        "events": [
+          {
+            "eventName": "customerNameUpdate",
+            "datatype": "string",
+            "length": 255,
+            "startPos": 49,
+            "endPos": 304
+          }
+        ]
+      }
+    },
+    "pgTableInfo": {
+      "tableInfo": {
+        "name": "customer_details",
+        "colName": "customerName",
+        "colNum": 2,
+        "datatype": "varchar",
+        "length": 255,
+        "scale": 0,
+        "nulls": false,
+        "default": false,
+        "defaultValue": "",
+        "isPrimaryKey": false,
+        "ixName": null,
+        "ixColSeq": null
+      }
+    },
+    "apiInfo": [
+      {
+        "spName": "getCustomerInfo",
+        "resultsetNum": 1,
+        "rsName": "customer-details",
+        "tagName": "customerName",
+        "position": 2,
+        "formatting": {
+          "applied": true,
+          "formatNumeric": false,
+          "other": true
+        },
+        "transformationLogic": {
+          "type": "string manipulation",
+          "expression": "trim and upper case conversion"
+        }
+      }
+    ],
+    "downstreamFeedDtls": {
+      "controlFile": "customer-control.txt",
+      "datafile": "customer-data.txt",
+      "fieldname": "customer-name",
+      "datatype": "string",
+      "length": 255,
+      "position": 2
+    }
+  }
+]

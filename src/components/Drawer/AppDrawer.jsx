@@ -41,6 +41,7 @@ import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import EnvironmentIcon from '@mui/icons-material/Computer'
 import CloseIcon from '@mui/icons-material/Close'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 
 /** @constant {number} Width of the drawer when expanded */
 const drawerWidth = 240
@@ -55,6 +56,7 @@ const environmentOptions = ['Development', 'Pre-prod', 'Production']
 const menuItems = [
   { name: 'Home', icon: <HomeIcon /> },
   { name: 'Data Browser', icon: <DatasetIcon /> },
+  { name: 'Account Inquiry', icon: <AccountBalanceIcon /> },
   { name: 'Table Demo', icon: <TableViewIcon /> },
   { name: 'Other', icon: <MoreHorizIcon /> }
 ]
@@ -151,9 +153,17 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
           flexShrink: 0,
           whiteSpace: 'nowrap',
           boxSizing: 'border-box',
+          '& .MuiDrawer-paper': {
+            backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
+            color: darkMode ? '#ffffff' : '#000000',
+            borderRight: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
+          },
           ...(open && {
             '& .MuiDrawer-paper': {
               width: drawerWidth,
+              backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
+              color: darkMode ? '#ffffff' : '#000000',
+              borderRight: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
               transition: (theme) => theme.transitions.create('width', {
                 easing: theme.transitions.easing.sharp,
                 duration: theme.transitions.duration.enteringScreen,
@@ -163,6 +173,9 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
           }),
           ...(!open && {
             '& .MuiDrawer-paper': {
+              backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
+              color: darkMode ? '#ffffff' : '#000000',
+              borderRight: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
               transition: (theme) => theme.transitions.create('width', {
                 easing: theme.transitions.easing.sharp,
                 duration: theme.transitions.duration.leavingScreen,
@@ -181,7 +194,12 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
             px: [1],
           }}
         >
-          <IconButton onClick={onMenuClick}>
+          <IconButton 
+            onClick={onMenuClick}
+            sx={{ 
+              color: darkMode ? '#ffffff' : '#000000' 
+            }}
+          >
             {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
         </Toolbar>
@@ -210,6 +228,10 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
                         minWidth: 0,
                         mr: open ? 3 : 'auto',
                         justifyContent: 'center',
+                        color: darkMode ? '#ffffff' : '#000000',
+                        '& .MuiSvgIcon-root': {
+                          color: darkMode ? '#ffffff' : '#000000'
+                        }
                       }}
                     >
                       {item.icon}
@@ -218,6 +240,10 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
                       primary={item.name} 
                       sx={{ 
                         opacity: open ? 1 : 0,
+                        color: darkMode ? '#ffffff' : '#000000',
+                        '& .MuiTypography-root': {
+                          color: darkMode ? '#ffffff' : '#000000'
+                        },
                         transition: (theme) => theme.transitions.create('opacity', {
                           easing: theme.transitions.easing.sharp,
                           duration: theme.transitions.duration.leavingScreen,

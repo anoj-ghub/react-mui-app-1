@@ -9,6 +9,7 @@ import { Box } from '@mui/material'
 import AppDrawer from './components/Drawer/AppDrawer'
 import Home from './pages/Home/Home'
 import DataBrowser from './pages/DataBrowser/DataBrowser'
+import { AccountInquiry } from './pages/AccountInquiry'
 import Other from './pages/Other/Other'
 import TableDemo from './pages/TableDemo/TableDemo'
 
@@ -54,6 +55,8 @@ function App() {
         return <Home />
       case 'Data Browser':
         return <DataBrowser environment={environment} darkMode={darkMode} setEnvironment={setEnvironment} setDarkMode={setDarkMode} />
+      case 'Account Inquiry':
+        return <AccountInquiry environment={environment} darkMode={darkMode} />
       case 'Table Demo':
         return <TableDemo />
       case 'Other':
@@ -64,7 +67,11 @@ function App() {
   }
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ 
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: darkMode ? '#121212' : '#fafafa'
+    }}>
       <AppDrawer 
         open={drawerOpen}
         onMenuClick={handleDrawerToggle}
@@ -82,6 +89,8 @@ function App() {
           p: 3, 
           mt: 8,
           ml: { sm: drawerOpen ? '240px' : '60px' },
+          backgroundColor: darkMode ? '#121212' : '#fafafa',
+          minHeight: '100vh',
           transition: (theme) => theme.transitions.create(['margin'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
