@@ -8,6 +8,22 @@ import { useState, useEffect } from 'react';
 import { fetchDataForTable } from '../services/api';
 // Removed import of tableOptions - now loaded dynamically from database
 
+// Key used to persist the selected environment in localStorage
+const ENV_STORAGE_KEY = 'app.environment.selected';
+
+// Safely read initial environment from localStorage, defaulting to 'Production'
+const getInitialEnvironment = () => {
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const saved = window.localStorage.getItem(ENV_STORAGE_KEY);
+            return saved || 'Production';
+        }
+    } catch (_) {
+        // ignore storage access issues
+    }
+    return 'Production';
+};
+
 /**
  * Custom hook for managing table data state, form inputs, and API calls
  * 
@@ -50,7 +66,7 @@ import { fetchDataForTable } from '../services/api';
 const useTableData = () => {
     const [selectedTable, setSelectedTable] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
-    const [environment, setEnvironment] = useState('Production');
+    const [environment, setEnvironment] = useState(getInitialEnvironment);
     const [date, setDate] = useState('');
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -73,11 +89,22 @@ const useTableData = () => {
         fetchData();
     }, [selectedTable, accountNumber, environment, date]);
 
+    // Persist environment selection whenever it changes
+    useEffect(() => {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem(ENV_STORAGE_KEY, environment);
+            }
+        } catch (_) {
+            // ignore storage access issues
+        }
+    }, [environment]);
+
     const clearInputs = () => {
         setAccountNumber('');
         setDate('');
         setSelectedTable('');
-        setEnvironment('Production');
+    // Intentionally do NOT reset environment so it persists unless manually changed
     };
 
     return {

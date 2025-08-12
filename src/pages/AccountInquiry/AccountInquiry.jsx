@@ -17,6 +17,7 @@ import {
 import AccountInquiryHeader from './AccountInquiryHeader'
 import AccountDataGrid from './AccountDataGrid'
 import AccountDetailsModal from './AccountDetailsModal'
+import AccountSearchPanel from './AccountSearchPanel'
 import useTableData from '../../hooks/useTableData'
 
 /**
@@ -31,11 +32,10 @@ import useTableData from '../../hooks/useTableData'
  * 
  * @component
  * @param {Object} props - Component props
- * @param {string} props.environment - Current environment
  * @param {boolean} props.darkMode - Dark mode state
  * @returns {JSX.Element} Account Inquiry page
  */
-function AccountInquiry({ environment, darkMode }) {
+function AccountInquiry({ darkMode }) {
   // Fixed table name for Customer Accounts
   const selectedTable = 'Customer Accounts'
   
@@ -50,14 +50,14 @@ function AccountInquiry({ environment, darkMode }) {
     data: tableData, 
     loading, 
     error, 
-    clearInputs 
+    clearInputs,
+    accountNumber,
+    setAccountNumber,
+    environment,
+    setEnvironment,
+    date,
+    setDate
   } = useTableData()
-
-  // Simulate refresh functionality
-  const refresh = () => {
-    clearInputs()
-    // Additional refresh logic can be added here
-  }
 
   /**
    * Handles row click to open details modal
@@ -95,10 +95,19 @@ function AccountInquiry({ environment, darkMode }) {
   }
 
   /**
+   * Handles search action
+   */
+  const handleSearch = () => {
+    // The useTableData hook automatically refetches when parameters change
+    // This function can be used for additional search logic if needed
+    showNotification('Searching accounts...', 'info')
+  }
+
+  /**
    * Handles refresh action
    */
   const handleRefresh = () => {
-    refresh()
+    clearInputs()
     showNotification('Data refreshed successfully', 'success')
   }
 
@@ -131,6 +140,21 @@ function AccountInquiry({ environment, darkMode }) {
         {/* Page Header */}
         <AccountInquiryHeader
           environment={environment}
+          darkMode={darkMode}
+          loading={loading}
+        />
+
+        {/* Search Panel */}
+        <AccountSearchPanel
+          accountNumber={accountNumber}
+          setAccountNumber={setAccountNumber}
+          environment={environment}
+          setEnvironment={setEnvironment}
+          date={date}
+          setDate={setDate}
+          onSearch={handleSearch}
+          onClear={clearInputs}
+          onRefresh={handleRefresh}
           darkMode={darkMode}
           loading={loading}
         />

@@ -132,8 +132,12 @@ function VerticalDataModal({ open, onClose, title, data, darkMode }) {
                   <TableCell 
                     sx={{ 
                       fontWeight: 700, 
-                      backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                      borderBottom: `2px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
+                      backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
+                      borderBottom: `2px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100,
+                      boxShadow: darkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
                     }}
                   >
                     Field Name
@@ -141,8 +145,12 @@ function VerticalDataModal({ open, onClose, title, data, darkMode }) {
                   <TableCell 
                     sx={{ 
                       fontWeight: 700,
-                      backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                      borderBottom: `2px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
+                      backgroundColor: darkMode ? '#2d2d2d' : '#ffffff',
+                      borderBottom: `2px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 100,
+                      boxShadow: darkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
                     }}
                   >
                     Value

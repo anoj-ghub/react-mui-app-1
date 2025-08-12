@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Box } from '@mui/material'
 import AppDrawer from './components/Drawer/AppDrawer'
 import Home from './pages/Home/Home'
@@ -12,6 +12,10 @@ import DataBrowser from './pages/DataBrowser/DataBrowser'
 import { AccountInquiry } from './pages/AccountInquiry'
 import Other from './pages/Other/Other'
 import TableDemo from './pages/TableDemo/TableDemo'
+import IndexedDBTest from './examples/IndexedDBTest'
+import RulesEvaluationDemo from './examples/RulesEvaluationDemo'
+import RulesEvaluationModalDemo from './examples/RulesEvaluationModalDemo'
+import RulesEvaluationStepperDemo from './examples/RulesEvaluationStepperDemo'
 
 /**
  * Main App component that manages global application state and routing
@@ -32,8 +36,32 @@ function App() {
   /** @type {[boolean, Function]} Drawer open/closed state */
   const [drawerOpen, setDrawerOpen] = useState(false) // Start collapsed by default
   
-  /** @type {[string, Function]} Current environment state (Development/Production) */
-  const [environment, setEnvironment] = useState('Development')
+  /**
+   * Persisted environment state (Development / Pre-prod / Production)
+   * Initializes from localStorage and syncs on change
+   */
+  const ENV_STORAGE_KEY = 'app.environment.selected'
+  const [environment, setEnvironment] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(ENV_STORAGE_KEY) || 'Development'
+      }
+    } catch (_) {
+      // ignore storage issues
+    }
+    return 'Development'
+  })
+
+  // Sync environment to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(ENV_STORAGE_KEY, environment)
+      }
+    } catch (_) {
+      // ignore storage issues
+    }
+  }, [environment])
   
   /** @type {[boolean, Function]} Dark mode theme state */
   const [darkMode, setDarkMode] = useState(false)
@@ -56,11 +84,19 @@ function App() {
       case 'Data Browser':
         return <DataBrowser environment={environment} darkMode={darkMode} setEnvironment={setEnvironment} setDarkMode={setDarkMode} />
       case 'Account Inquiry':
-        return <AccountInquiry environment={environment} darkMode={darkMode} />
+        return <AccountInquiry darkMode={darkMode} />
       case 'Table Demo':
         return <TableDemo />
       case 'Other':
         return <Other />
+      case 'IndexedDB Test':
+        return <IndexedDBTest />
+      case 'Rules Evaluation':
+        return <RulesEvaluationDemo />
+      case 'Rules Modal Demo':
+        return <RulesEvaluationModalDemo />
+      case 'Rules Stepper Demo':
+        return <RulesEvaluationStepperDemo />
       default:
         return <Home />
     }

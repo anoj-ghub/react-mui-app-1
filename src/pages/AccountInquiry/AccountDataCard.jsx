@@ -62,8 +62,8 @@ function AccountDataCard({
   const [expanded, setExpanded] = useState(false)
   const [hovering, setHovering] = useState(false)
 
-  // Show first 5 fields by default, expand to show all
-  const visibleData = expanded ? data : data.slice(0, 5)
+  // Always show first 5 fields, additional fields shown in collapse
+  const visibleData = data.slice(0, 5)
   const hasMoreData = data.length > 5
   const hasData = data && data.length > 0
 
