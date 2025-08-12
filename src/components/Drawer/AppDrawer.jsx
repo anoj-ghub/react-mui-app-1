@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Drawer,
   List,
@@ -27,7 +27,8 @@ import {
   Select,
   MenuItem,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Chip
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import HomeIcon from '@mui/icons-material/Home'
@@ -39,9 +40,12 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
+import StorageIcon from '@mui/icons-material/Storage'
+import AssessmentIcon from '@mui/icons-material/Assessment'
 import EnvironmentIcon from '@mui/icons-material/Computer'
 import CloseIcon from '@mui/icons-material/Close'
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
+import { getRecentEnvironments } from '../../utils/environmentRecentValues'
 
 /** @constant {number} Width of the drawer when expanded */
 const drawerWidth = 240
@@ -57,7 +61,11 @@ const menuItems = [
   { name: 'Home', icon: <HomeIcon /> },
   { name: 'Data Browser', icon: <DatasetIcon /> },
   { name: 'Account Inquiry', icon: <AccountBalanceIcon /> },
+  { name: 'Rules Evaluation', icon: <AssessmentIcon /> },
+  { name: 'Rules Modal Demo', icon: <AssessmentIcon /> },
+  { name: 'Rules Stepper Demo', icon: <AssessmentIcon /> },
   { name: 'Table Demo', icon: <TableViewIcon /> },
+  { name: 'IndexedDB Test', icon: <StorageIcon /> },
   { name: 'Other', icon: <MoreHorizIcon /> }
 ]
 
@@ -88,6 +96,20 @@ const menuItems = [
 function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, environment, setEnvironment, darkMode, setDarkMode }) {
   const [settingsAnchorEl, setSettingsAnchorEl] = useState(null)
   const settingsOpen = Boolean(settingsAnchorEl)
+
+  // Get recent environments from recent values storage
+  const recentEnvironments = useMemo(() => getRecentEnvironments(), [settingsOpen])
+  
+  // Combine default environments with recent ones, ensuring no duplicates
+  const allEnvironments = useMemo(() => {
+    const combined = [...environmentOptions]
+    recentEnvironments.forEach(env => {
+      if (!combined.includes(env)) {
+        combined.push(env)
+      }
+    })
+    return combined
+  }, [recentEnvironments])
 
   const handleSettingsClick = (event) => {
     setSettingsAnchorEl(event.currentTarget)
@@ -306,6 +328,15 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
                   Environment
                 </Typography>
+                {recentEnvironments.length > 0 && (
+                  <Chip 
+                    label={`${recentEnvironments.length} recent`}
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    sx={{ ml: 'auto', fontSize: '0.7rem', height: 20 }}
+                  />
+                )}
               </Box>
               
               <FormControl fullWidth size="small">
@@ -322,10 +353,21 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
                     }
                   }}
                 >
-                  {environmentOptions.map((env) => (
+                  {allEnvironments.map((env) => (
                     <MenuItem key={env} value={env}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                        <span>{env}</span>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <span>{env}</span>
+                          {recentEnvironments.includes(env) && !environmentOptions.includes(env) && (
+                            <Chip 
+                              label="Recent" 
+                              size="small" 
+                              color="primary" 
+                              variant="outlined"
+                              sx={{ fontSize: '0.65rem', height: 16 }}
+                            />
+                          )}
+                        </Box>
                         <Box 
                           sx={{ 
                             width: 8, 
@@ -334,7 +376,7 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
                             backgroundColor: 
                               env === 'Production' ? 'error.main' :
                               env === 'Development' ? 'info.main' :
-                              env === 'Pre-prod' ? 'warning.main' : 'default',
+                              env === 'Pre-prod' ? 'warning.main' : 'success.main',
                             ml: 1
                           }} 
                         />

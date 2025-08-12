@@ -4,6 +4,7 @@
  * @version 1.0.0
  */
 
+import React from 'react'
 import { 
   Box, Typography, FormControl, InputLabel, Select, MenuItem, 
   TextField, Button, Grid, Card, CardContent, Chip, CircularProgress,
@@ -15,6 +16,10 @@ import SearchIcon from '@mui/icons-material/Search'
 import ClearIcon from '@mui/icons-material/Clear'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import useTableList from '../../hooks/useTableList'
+import { RecentValuesButton, SecureRecentValuesButton } from '../../components'
+import { addRecentValue } from '../../utils/recentValuesStorage'
+import { useSecureStorage } from '../../hooks/useSecureStorage'
+import { presetConfigs, createStorageKey } from '../../utils/recentValuesConfig'
 
 /** @constant {string[]} Available table options for selection */
 // Removed hardcoded table options - now loaded from database via useTableList hook
@@ -56,6 +61,8 @@ const getEnvironmentColor = (env) => {
  * @param {boolean} props.darkMode - Dark mode theme flag
  * @param {string} props.selectedDate - Currently selected date
  * @param {Function} props.setSelectedDate - Function to update selected date
+ * @param {string} props.environment - Current environment selection
+ * @param {Function} props.setEnvironment - Function to update environment selection
  * @returns {JSX.Element} Configuration panel component
  * 
  * @example
@@ -68,6 +75,8 @@ const getEnvironmentColor = (env) => {
  *   handleSubmit={onSubmit}
  *   handleClear={onClear}
  *   darkMode={false}
+ *   environment="Development"
+ *   setEnvironment={setEnv}
  * />
  * ```
  */
@@ -82,10 +91,19 @@ function ConfigurationPanel({
   handleClear,
   darkMode,
   selectedDate,
-  setSelectedDate
+  setSelectedDate,
+  environment,
+  setEnvironment
 }) {
   // Load table list from external database
   const { tableOptions, loading: tableListLoading, error: tableListError, refetch } = useTableList();
+
+  // Add IndexedDB support
+  const { isReady: indexedDBReady, addRecentEntry } = useSecureStorage('DataBrowserApp')
+  
+  // State to track which storage method to use and save function
+  const [useIndexedDB, setUseIndexedDB] = React.useState(false)
+  const [saveEntryFunction, setSaveEntryFunction] = React.useState(null)
 
   // Check if required fields are filled for form validation
   const isFormValid = selectedTable && accountNumber && isAccountNumberValid;
@@ -107,6 +125,64 @@ function ConfigurationPanel({
     { value: '2024-12-31', label: 'Last Year End (2024-12-31)' },
     { value: '2024-05-24', label: 'Same Date Last Year (2024-05-24)' }
   ]
+  const STORAGE_KEY = createStorageKey('dataBrowser', 'configuration')
+
+  // Handle storage mode change from the SecureRecentValuesButton
+  const handleStorageModeChange = (useSecure) => {
+    setUseIndexedDB(useSecure)
+    console.log(`Storage mode changed to: ${useSecure ? 'IndexedDB' : 'localStorage'}`)
+  }
+
+  const onRecentSelect = (entry) => {
+    if (!entry) return
+    // Autofill values
+    if (entry.selectedTable !== undefined) setSelectedTable(entry.selectedTable)
+    if (entry.accountNumber !== undefined) setAccountNumber(entry.accountNumber)
+    if (entry.selectedDate !== undefined) setSelectedDate(entry.selectedDate)
+    // Update environment from recent entry selection
+    if (entry.environment !== undefined && setEnvironment) {
+      setEnvironment(entry.environment)
+      console.log('Updated environment from recent entry:', entry.environment)
+    }
+  }
+
+  const handleSubmitWithSave = async () => {
+    // Prepare form data including environment
+    const formData = { selectedTable, accountNumber, selectedDate, environment }
+    
+    try {
+      // Use the exposed save function from SecureRecentValuesButton when available
+      if (saveEntryFunction) {
+        console.log('Using SecureRecentValuesButton save function')
+        const ok = await saveEntryFunction(formData)
+        if (!ok) {
+          // Only fallback if NOT using secure mode
+          if (!useIndexedDB) {
+            console.log('Save returned false; falling back to localStorage (non-secure mode)')
+            addRecentValue(STORAGE_KEY, formData)
+          } else {
+            console.warn('Secure mode enabled but save failed; not falling back to localStorage')
+          }
+        }
+      } else {
+        // No save function exposed; fallback only if not using secure mode
+        if (!useIndexedDB) {
+          console.log('No save function; saving to localStorage (non-secure mode)')
+          addRecentValue(STORAGE_KEY, formData)
+        } else {
+          console.warn('No save function in secure mode; skipping localStorage fallback')
+        }
+      }
+      
+      // Call the original submit handler
+      handleSubmit?.()
+    } catch (error) {
+      console.error('Failed to save recent entry:', error)
+      // Still call the original submit handler even if storage fails
+      handleSubmit?.()
+    }
+  }
+
   return (
     <Card 
       elevation={2} 
@@ -323,7 +399,7 @@ function ConfigurationPanel({
                   <Button
                 variant="contained" 
                 size="small"
-                onClick={handleSubmit}
+                onClick={handleSubmitWithSave}
                 disabled={!isFormValid}
                 startIcon={<SearchIcon sx={{ fontSize: '0.9rem' }} />}
                 sx={{ 
@@ -366,6 +442,27 @@ function ConfigurationPanel({
               >
                 Submit
               </Button>
+                </Box>
+                <Box sx={{ minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                  <SecureRecentValuesButton
+                    storageKey={STORAGE_KEY}
+                    onSelect={onRecentSelect}
+                    buttonProps={{ sx: { height: 32, borderRadius: 2, minWidth: 90, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' } }}
+                    title="Recent Data Browser submissions"
+                    fieldConfig={presetConfigs.dataBrowser}
+                    useSecureStorage={useIndexedDB}
+                    showStorageToggle={true}
+                    onStorageModeChange={handleStorageModeChange}
+                    onSaveEntry={(fn) => {
+                      // Store function using functional setter to avoid treating it as a state updater
+                      if (typeof fn === 'function') {
+                        setSaveEntryFunction(() => fn)
+                      } else {
+                        console.warn('onSaveEntry received non-function:', fn)
+                        setSaveEntryFunction(null)
+                      }
+                    }}
+                  />
                 </Box>
                 <Box sx={{ minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
                   <Button

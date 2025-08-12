@@ -92,8 +92,8 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
 
   // Handle account number change with validation
   const handleAccountNumberChange = (value) => {
-    const validatedValue = validateAccountNumber(value)
-    setAccountNumber(validatedValue)
+    setAccountNumber(value)
+    validateAccountNumber(value)
   }
 
   const handleViewDetails = useCallback((row) => {
@@ -206,6 +206,8 @@ function DataBrowser({ environment, darkMode, setEnvironment, setDarkMode }) {
           darkMode={darkMode}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
+          environment={environment}
+          setEnvironment={setEnvironment}
         />
 
         <FilterPanel
