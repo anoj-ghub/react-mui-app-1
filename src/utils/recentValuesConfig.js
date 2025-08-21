@@ -81,11 +81,13 @@ export const presetConfigs = {
       { key: 'accountNumber', label: 'Account Number', minWidth: 150 },
       { key: 'environment', label: 'Environment', minWidth: 120 },
       { key: 'date', label: 'Date Filter', minWidth: 140 },
+      { key: 'selectedOption', label: 'Search Type', minWidth: 120 },
       { key: 'timestamp', label: 'Created', type: 'date', minWidth: 140 }
     ],
     displayFields: [
       { key: 'accountNumber', fallback: '(no account)' },
       { key: 'environment', fallback: 'Production' },
+      { key: 'selectedOption', fallback: 'Option 1' },
       { key: 'date', fallback: 'All Dates' }
     ],
     emptySubtext: 'Submit an account inquiry to save your first entry.'

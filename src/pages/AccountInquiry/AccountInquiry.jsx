@@ -44,6 +44,7 @@ function AccountInquiry({ darkMode }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [currentRecordIndex, setCurrentRecordIndex] = useState(0)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' })
+  const [selectedOption, setSelectedOption] = useState('option-1') // Radio button state
 
   // Custom hook for table data
   const { 
@@ -152,6 +153,8 @@ function AccountInquiry({ darkMode }) {
           setEnvironment={setEnvironment}
           date={date}
           setDate={setDate}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
           onSearch={handleSearch}
           onClear={clearInputs}
           onRefresh={handleRefresh}

@@ -10,6 +10,8 @@ import AppDrawer from './components/Drawer/AppDrawer'
 import Home from './pages/Home/Home'
 import DataBrowser from './pages/DataBrowser/DataBrowser'
 import { AccountInquiry } from './pages/AccountInquiry'
+import { UpdateConfigTable, EnableDisableRegions, UpdateConfigEntries } from './pages/UpdateConfigTable'
+import { CustomerProfiles } from './pages/CustomerProfiles'
 import Other from './pages/Other/Other'
 import TableDemo from './pages/TableDemo/TableDemo'
 import IndexedDBTest from './examples/IndexedDBTest'
@@ -41,7 +43,7 @@ function App() {
    * Initializes from localStorage and syncs on change
    */
   const ENV_STORAGE_KEY = 'app.environment.selected'
-  const [environment, setEnvironment] = useState(() => {
+  const [environment, setEnvironmentState] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         return window.localStorage.getItem(ENV_STORAGE_KEY) || 'Development'
@@ -51,6 +53,18 @@ function App() {
     }
     return 'Development'
   })
+
+  // Wrapped setEnvironment with logging
+  const setEnvironment = (newEnv) => {
+    console.log('setEnvironment called with:', newEnv)
+    console.log('Current environment before update:', environment)
+    setEnvironmentState(newEnv)
+  }
+
+  // Log environment changes
+  useEffect(() => {
+    console.log('Environment state updated to:', environment)
+  }, [environment])
 
   // Sync environment to localStorage whenever it changes
   useEffect(() => {
@@ -85,6 +99,14 @@ function App() {
         return <DataBrowser environment={environment} darkMode={darkMode} setEnvironment={setEnvironment} setDarkMode={setDarkMode} />
       case 'Account Inquiry':
         return <AccountInquiry darkMode={darkMode} />
+      case 'Update Config Table':
+        return <UpdateConfigTable darkMode={darkMode} environment={environment} />
+      case 'Enable/Disable Regions':
+        return <EnableDisableRegions darkMode={darkMode} environment={environment} />
+      case 'Update Config Entries':
+        return <UpdateConfigEntries darkMode={darkMode} environment={environment} />
+      case 'Customer Profiles':
+        return <CustomerProfiles darkMode={darkMode} environment={environment} />
       case 'Table Demo':
         return <TableDemo />
       case 'Other':

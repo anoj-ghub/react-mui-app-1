@@ -28,7 +28,8 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
-  Chip
+  Chip,
+  Collapse
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import HomeIcon from '@mui/icons-material/Home'
@@ -45,6 +46,12 @@ import StorageIcon from '@mui/icons-material/Storage'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import EnvironmentIcon from '@mui/icons-material/Computer'
 import CloseIcon from '@mui/icons-material/Close'
+import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications'
+import PeopleIcon from '@mui/icons-material/People'
+import PublicIcon from '@mui/icons-material/Public'
+import EditIcon from '@mui/icons-material/Edit'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { getRecentEnvironments } from '../../utils/environmentRecentValues'
 
 /** @constant {number} Width of the drawer when expanded */
@@ -61,6 +68,15 @@ const menuItems = [
   { name: 'Home', icon: <HomeIcon /> },
   { name: 'Data Browser', icon: <DatasetIcon /> },
   { name: 'Account Inquiry', icon: <AccountBalanceIcon /> },
+  { 
+    name: 'Update Config Table', 
+    icon: <SettingsApplicationsIcon />,
+    subItems: [
+      { name: 'Enable/Disable Regions', icon: <PublicIcon /> },
+      { name: 'Update Config Entries', icon: <EditIcon /> }
+    ]
+  },
+  { name: 'Customer Profiles', icon: <PeopleIcon /> },
   { name: 'Rules Evaluation', icon: <AssessmentIcon /> },
   { name: 'Rules Modal Demo', icon: <AssessmentIcon /> },
   { name: 'Rules Stepper Demo', icon: <AssessmentIcon /> },
@@ -96,6 +112,7 @@ const menuItems = [
 function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, environment, setEnvironment, darkMode, setDarkMode }) {
   const [settingsAnchorEl, setSettingsAnchorEl] = useState(null)
   const settingsOpen = Boolean(settingsAnchorEl)
+  const [expandedMenus, setExpandedMenus] = useState({})
 
   // Get recent environments from recent values storage
   const recentEnvironments = useMemo(() => getRecentEnvironments(), [settingsOpen])
@@ -117,6 +134,13 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
 
   const handleSettingsClose = () => {
     setSettingsAnchorEl(null)
+  }
+
+  const handleSubMenuToggle = (menuName) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuName]: !prev[menuName]
+    }))
   }
 
   const getEnvironmentColor = (env) => {
@@ -231,50 +255,138 @@ function AppDrawer({ open, onClose, onMenuClick, selectedPage, onPageSelect, env
         <Box sx={{ overflow: 'auto' }}>
           <List>
             {menuItems.map((item) => (
-              <ListItem key={item.name} disablePadding sx={{ display: 'block' }}>
-                <Tooltip title={!open ? item.name : ''} placement="right">
-                  <ListItemButton
-                    selected={selectedPage === item.name}
-                    onClick={() => {
-                      onPageSelect(item.name)
-                      // Don't close drawer in mini variant mode
-                    }}
-                    sx={{
-                      minHeight: 48,
-                      justifyContent: open ? 'initial' : 'center',
-                      px: 2.5,
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 0,
-                        mr: open ? 3 : 'auto',
-                        justifyContent: 'center',
-                        color: darkMode ? '#ffffff' : '#000000',
-                        '& .MuiSvgIcon-root': {
-                          color: darkMode ? '#ffffff' : '#000000'
+              <div key={item.name}>
+                <ListItem disablePadding sx={{ display: 'block' }}>
+                  <Tooltip title={!open ? item.name : ''} placement="right">
+                    <ListItemButton
+                      selected={selectedPage === item.name || (item.subItems && item.subItems.some(subItem => selectedPage === subItem.name))}
+                      onClick={() => {
+                        if (item.subItems) {
+                          handleSubMenuToggle(item.name)
+                          if (!open) {
+                            // If drawer is collapsed, expand it when clicking on menu with sub-items
+                            onMenuClick()
+                          }
+                        } else {
+                          onPageSelect(item.name)
                         }
                       }}
+                      sx={{
+                        minHeight: 48,
+                        justifyContent: open ? 'initial' : 'center',
+                        px: 2.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
                     >
-                      {item.icon}
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary={item.name} 
-                      sx={{ 
-                        opacity: open ? 1 : 0,
-                        color: darkMode ? '#ffffff' : '#000000',
-                        '& .MuiTypography-root': {
-                          color: darkMode ? '#ffffff' : '#000000'
-                        },
-                        transition: (theme) => theme.transitions.create('opacity', {
-                          easing: theme.transitions.easing.sharp,
-                          duration: theme.transitions.duration.leavingScreen,
-                        }),
-                      }} 
-                    />
-                  </ListItemButton>
-                </Tooltip>
-              </ListItem>
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : 'auto',
+                          justifyContent: 'center',
+                          color: darkMode ? '#ffffff' : '#000000',
+                          '& .MuiSvgIcon-root': {
+                            color: darkMode ? '#ffffff' : '#000000'
+                          }
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      
+                      {/* Text and Arrow Container */}
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          opacity: open ? 1 : 0,
+                          transition: (theme) => theme.transitions.create('opacity', {
+                            easing: theme.transitions.easing.sharp,
+                            duration: theme.transitions.duration.leavingScreen,
+                          }),
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            color: darkMode ? '#ffffff' : '#000000',
+                            flex: 1,
+                          }}
+                        >
+                          {item.name}
+                        </Typography>
+                        
+                        {item.subItems && open && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              ml: 1,
+                              color: darkMode ? '#ffffff' : '#000000',
+                            }}
+                          >
+                            {expandedMenus[item.name] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                          </Box>
+                        )}
+                      </Box>
+                    </ListItemButton>
+                  </Tooltip>
+                </ListItem>
+                
+                {/* Sub-menu items */}
+                {item.subItems && (
+                  <Collapse in={expandedMenus[item.name] && open} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                      {item.subItems.map((subItem) => (
+                        <ListItem key={subItem.name} disablePadding sx={{ display: 'block' }}>
+                          <Tooltip title={!open ? subItem.name : ''} placement="right">
+                            <ListItemButton
+                              selected={selectedPage === subItem.name}
+                              onClick={() => onPageSelect(subItem.name)}
+                              sx={{
+                                minHeight: 40,
+                                pl: 4,
+                                justifyContent: open ? 'initial' : 'center',
+                                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                              }}
+                            >
+                              <ListItemIcon
+                                sx={{
+                                  minWidth: 0,
+                                  mr: open ? 2 : 'auto',
+                                  justifyContent: 'center',
+                                  color: darkMode ? '#bbbbbb' : '#666666',
+                                  '& .MuiSvgIcon-root': {
+                                    fontSize: '1.2rem',
+                                    color: darkMode ? '#bbbbbb' : '#666666'
+                                  }
+                                }}
+                              >
+                                {subItem.icon}
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={subItem.name} 
+                                sx={{ 
+                                  opacity: open ? 1 : 0,
+                                  color: darkMode ? '#bbbbbb' : '#666666',
+                                  '& .MuiTypography-root': {
+                                    fontSize: '0.9rem',
+                                    color: darkMode ? '#bbbbbb' : '#666666'
+                                  },
+                                  transition: (theme) => theme.transitions.create('opacity', {
+                                    easing: theme.transitions.easing.sharp,
+                                    duration: theme.transitions.duration.leavingScreen,
+                                  }),
+                                }} 
+                              />
+                            </ListItemButton>
+                          </Tooltip>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Collapse>
+                )}
+              </div>
             ))}
           </List>
         </Box>

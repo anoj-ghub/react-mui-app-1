@@ -18,7 +18,11 @@ import {
   Button,
   Grid,
   IconButton,
-  Divider
+  Divider,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormLabel
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -44,6 +48,8 @@ import { presetConfigs, createStorageKey } from '../../utils/recentValuesConfig'
  * @param {Function} props.setEnvironment - Function to update environment
  * @param {string} props.date - Current date filter
  * @param {Function} props.setDate - Function to update date filter
+ * @param {string} props.selectedOption - Current selected option (option-1 or option-2)
+ * @param {Function} props.setSelectedOption - Function to update selected option
  * @param {Function} props.onSearch - Function to trigger search
  * @param {Function} props.onClear - Function to clear filters
  * @param {Function} props.onRefresh - Function to refresh data
@@ -58,6 +64,8 @@ function AccountSearchPanel({
   setEnvironment,
   date,
   setDate,
+  selectedOption,
+  setSelectedOption,
   onSearch,
   onClear,
   onRefresh,
@@ -99,6 +107,7 @@ function AccountSearchPanel({
       accountNumber,
       environment,
       date,
+      selectedOption,
       timestamp: new Date().toISOString()
     }
 
@@ -124,6 +133,7 @@ function AccountSearchPanel({
     if (entry.accountNumber !== undefined) setAccountNumber(entry.accountNumber)
     if (entry.environment !== undefined) setEnvironment(entry.environment)
     if (entry.date !== undefined) setDate(entry.date)
+    if (entry.selectedOption !== undefined) setSelectedOption(entry.selectedOption)
   }
 
   // Handle storage mode change
@@ -154,7 +164,7 @@ function AccountSearchPanel({
 
         <Grid container spacing={2} alignItems="center">
           {/* Account Number Input */}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={2.5}>
             <TextField
               fullWidth
               size="small"
@@ -167,7 +177,7 @@ function AccountSearchPanel({
           </Grid>
 
           {/* Environment Selection */}
-          <Grid item xs={12} md={2.5}>
+          <Grid item xs={12} md={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Environment</InputLabel>
               <Select
@@ -186,7 +196,7 @@ function AccountSearchPanel({
           </Grid>
 
           {/* Date Selection */}
-          <Grid item xs={12} md={2.5}>
+          <Grid item xs={12} md={2}>
             <FormControl fullWidth size="small">
               <InputLabel>Date Filter</InputLabel>
               <Select
@@ -204,9 +214,50 @@ function AccountSearchPanel({
             </FormControl>
           </Grid>
 
+          {/* Radio Button Group */}
+          <Grid item xs={12} md={2.5}>
+            <FormControl component="fieldset" size="small">
+              <FormLabel component="legend" sx={{ fontSize: '0.875rem', mb: 0.5 }}>
+                Search Type
+              </FormLabel>
+              <RadioGroup
+                value={selectedOption || 'option-1'}
+                onChange={(e) => {
+                  console.log('Radio button changed:', e.target.value)
+                  setSelectedOption(e.target.value)
+                }}
+                row
+                sx={{ gap: 1 }}
+              >
+                <FormControlLabel
+                  value="option-1"
+                  control={<Radio size="small" />}
+                  label="Option 1"
+                  disabled={loading}
+                  sx={{ 
+                    '& .MuiFormControlLabel-label': { 
+                      fontSize: '0.875rem' 
+                    }
+                  }}
+                />
+                <FormControlLabel
+                  value="option-2"
+                  control={<Radio size="small" />}
+                  label="Option 2"
+                  disabled={loading}
+                  sx={{ 
+                    '& .MuiFormControlLabel-label': { 
+                      fontSize: '0.875rem' 
+                    }
+                  }}
+                />
+              </RadioGroup>
+            </FormControl>
+          </Grid>
+
           {/* Action Buttons */}
-          <Grid item xs={12} md={2}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+          <Grid item xs={12} md={1.5}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
                 size="small"
@@ -217,27 +268,29 @@ function AccountSearchPanel({
               >
                 Search
               </Button>
-              <IconButton
-                size="small"
-                onClick={onClear}
-                disabled={loading}
-                title="Clear filters"
-              >
-                <ClearIcon />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={onRefresh}
-                disabled={loading}
-                title="Refresh data"
-              >
-                <RefreshIcon />
-              </IconButton>
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <IconButton
+                  size="small"
+                  onClick={onClear}
+                  disabled={loading}
+                  title="Clear filters"
+                >
+                  <ClearIcon />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={onRefresh}
+                  disabled={loading}
+                  title="Refresh data"
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Box>
             </Box>
           </Grid>
 
           {/* Recent Values Button */}
-          <Grid item xs={12} md={2}>
+          <Grid item xs={12} md={1.5}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <SecureRecentValuesButton
                 storageKey={createStorageKey('accountInquiry', 'search')}
